@@ -1,6 +1,132 @@
-import { line, area, curveLinear, curveStep } from "d3-shape";
 import type { ScaleLinear, ScaleTime } from "d3-scale";
+import { area, curveLinear, curveStep, line } from "d3-shape";
 import type { GraphicScale } from "./state/types";
+
+export function barplotPolyline(
+  data,
+  xLow,
+  xHigh,
+  yAccessor,
+  X,
+  Y,
+  separator = 1,
+  closeBottom = false
+) {
+  const inflator = 1;
+  const path = data
+    //.filter((d) => d[yAccessor])
+    .reduce((pointsPathString, datum, i) => {
+      const low = datum[xLow];
+      const high = datum[xHigh];
+      const count = datum[yAccessor];
+
+      const x = X(low) + separator;
+
+      const width = Math.max(0.5, X(high) - X(low) - separator * 2);
+      const y = Y(0) * (1 - inflator) + Y(count) * inflator;
+
+      const computedHeight = Math.min(
+        Y(0),
+        Y(0) * inflator - Y(count) * inflator
+      );
+      const height = separator > 0 ? computedHeight : 0;
+
+      // do not add zero values here
+      if (count === 0) {
+        return pointsPathString;
+      }
+
+      let p1 = "";
+
+      const nextPointIsZero =
+        i < data.length - 1 && data[i + 1][yAccessor] === 0;
+
+      const lastPointWasZero = i > 0 && data[i - 1][yAccessor] === 0;
+
+      if (separator === 0 && lastPointWasZero) {
+        // we will need to start this thing at 0?
+        p1 = `M${x},${y + computedHeight}`;
+      } else if (separator > 0 || i === 0) {
+        // standard case.
+        p1 = `${i !== 0 ? "M" : ""}${x},${y + height}`;
+      }
+
+      const p2 = `${x},${y}`;
+      const p3 = `${x + width},${y}`;
+
+      const p4 =
+        separator > 0 || nextPointIsZero
+          ? `${x + width},${y + (separator > 0 ? height : computedHeight)}`
+          : "";
+      const closedBottom = closeBottom ? `${x},${y + height}` : "";
+
+      return pointsPathString + `${p1} ${p2} ${p3} ${p4} ${closedBottom} `;
+    }, " ");
+  return (
+    `M${X(data[0][xLow]) + separator},${Y(0)} ` +
+    path +
+    ` ${X(data.findLast((d) => d[yAccessor])[xHigh]) - separator},${Y(0)} `
+  );
+}
+
+export function toBarPlotPoints(
+  data,
+  xLowAccessor,
+  xHighAccessor,
+  yAccessor,
+  separator = 0
+) {
+  // const separateQuantity = separate ? 0.25 : 0;
+  let array = [];
+  array.push({ x: data[0][xLowAccessor], [yAccessor]: 0 });
+  array = [
+    ...array,
+    ...data
+      .map((datum) => {
+        const points = [
+          {
+            x: datum[xLowAccessor],
+            [yAccessor]: datum[yAccessor],
+          },
+          {
+            x: datum[xHighAccessor],
+            [yAccessor]: datum[yAccessor],
+          },
+        ];
+        if (separator) {
+          points.unshift({
+            x: datum[xLowAccessor],
+            [yAccessor]: 0,
+          });
+          points.push({
+            x: datum[xHighAccessor],
+            [yAccessor]: 0,
+          });
+        }
+        return points;
+      })
+      .flat(),
+  ];
+  array.push({ x: data.slice(-1)[0][xHighAccessor], [yAccessor]: 0 });
+  return array;
+  // { x: data.slice(-1)[0][xHighAccessor], [yAccessor]: 0 },
+}
+/**
+ * Calculate the empirical cumulative density. Expects a pre-sorted array such as an array of objects
+ * representing a histogram.
+ * @param data an array of objects
+ * @param weightAccessor the key for the weight. If none provided, treates each point equally
+ * @returns another array
+ */
+export function eCDF(data, weightAccessor: string = undefined) {
+  const total = data.reduce((acc, v) => acc + v[weightAccessor], 0);
+  let t = 0;
+  return data.reduce((acc: Array<unknown>, v) => {
+    t += weightAccessor ? v[weightAccessor] : 1;
+    acc.push({ ...v, total: t / total });
+    return acc;
+  }, []);
+}
 
 /**
  * Creates a string to be fed into the d attribute of a path,

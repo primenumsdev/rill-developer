@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "data": [
+        { "bucket": 1, "low": 1, "high": 2, "count": 252698 },
+        { "bucket": 2, "low": 2, "high": 3, "count": 230401 },
+        { "bucket": 3, "low": 3, "high": 4, "count": 252689 },
+        { "bucket": 4, "low": 4, "high": 5, "count": 244491 },
+        { "bucket": 5, "low": 5, "high": 6, "count": 247332 },
+        { "bucket": 6, "low": 6, "high": 7, "count": 235530 },
+        { "bucket": 7, "low": 7, "high": 8, "count": 243287 },
+        { "bucket": 8, "low": 8, "high": 9, "count": 243177 },
+        { "bucket": 9, "low": 9, "high": 10, "count": 235274 },
+        { "bucket": 10, "low": 10, "high": 11, "count": 243022 },
+        { "bucket": 11, "low": 11, "high": 12, "count": 478426 }
+      ],
+      "column": "Month",
+      "table": "city_temperature",
+      "maxmin": { "max": 12, "min": 1 }
+    }
+  ]
+}

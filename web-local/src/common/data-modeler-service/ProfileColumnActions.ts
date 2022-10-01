@@ -1,25 +1,26 @@
-import {
-  EntityType,
-  StateType,
-} from "../data-modeler-state-service/entity-state-service/EntityStateService";
-import type { DataProfileStateActionArg } from "../data-modeler-state-service/entity-state-service/DataProfileEntity";
-import { DataModelerActions } from "./DataModelerActions";
+import { COLUMN_PROFILE_CONFIG } from "@rilldata/web-local/lib/application-config";
 import {
   CATEGORICALS,
+  INTEGERS,
   NUMERICS,
   TIMESTAMPS,
 } from "@rilldata/web-local/lib/duckdb-data-types";
 import type { ProfileColumn } from "@rilldata/web-local/lib/types";
+import type { DataProfileStateActionArg } from "../data-modeler-state-service/entity-state-service/DataProfileEntity";
+import {
+  EntityType,
+  StateType,
+} from "../data-modeler-state-service/entity-state-service/EntityStateService";
+import type { PersistentModelEntity } from "../data-modeler-state-service/entity-state-service/PersistentModelEntityService";
+import type { PersistentTableEntity } from "../data-modeler-state-service/entity-state-service/PersistentTableEntityService";
 import {
   DatabaseActionQueuePriority,
   DatabaseProfilesFieldPriority,
-  MetadataPriority,
   getProfilePriority,
+  MetadataPriority,
   ProfileMetadataPriorityMap,
 } from "../priority-action-queue/DatabaseActionQueuePriority";
-import { COLUMN_PROFILE_CONFIG } from "@rilldata/web-local/lib/application-config";
-import type { PersistentModelEntity } from "../data-modeler-state-service/entity-state-service/PersistentModelEntityService";
-import type { PersistentTableEntity } from "../data-modeler-state-service/entity-state-service/PersistentTableEntityService";
+import { DataModelerActions } from "./DataModelerActions";
 
 const ProfileEntityPriorityMap = {
   [EntityType.Table]: DatabaseActionQueuePriority.TableProfile,
@@ -69,16 +70,34 @@ export class ProfileColumnActions extends DataModelerActions {
     column: ProfileColumn
   ): Promise<void> {
     const promises = [];
+    promises.push(
+      this.collectCardinality(entityType, entityId, tableName, column)
+    );
+    promises.push(this.collectTopK(entityType, entityId, tableName, column));
     if (CATEGORICALS.has(column.type)) {
-      promises.push(
-        this.collectCardinality(entityType, entityId, tableName, column)
-      );
-      promises.push(this.collectTopK(entityType, entityId, tableName, column));
     } else {
       if (NUMERICS.has(column.type)) {
-        promises.push(
-          this.collectNumericHistogram(entityType, entityId, tableName, column)
-        );
+        if (INTEGERS.has(column.type)) {
+          console.log("ok", column.name);
+          promises.push(
+            this.collectIntegerHistogram(
+              entityType,
+              entityId,
+              tableName,
+              column
+            )
+          );
+        } else {
+          promises.push(
+            this.collectNumericHistogram(
+              entityType,
+              entityId,
+              tableName,
+              column
+            )
+          );
+        }
+
         promises.push(
           this.collectRugHistogram(entityType, entityId, tableName, column)
         );
@@ -228,6 +247,31 @@ export class ProfileColumnActions extends DataModelerActions {
             sampleSize,
           },
         ]
+      ),
+    ]);
+  }
+
+  private async collectIntegerHistogram(
+    entityType: EntityType,
+    entityId: string,
+    tableName: string,
+    column: ProfileColumn
+  ): Promise<void> {
+    this.dataModelerStateService.dispatch("updateColumnSummary", [
+      entityType,
+      entityId,
+      column.name,
+      await this.databaseActionQueue.enqueue(
+        {
+          id: entityId + column.name + MetadataPriority.Summary,
+          priority: getProfilePriority(
+            ProfileEntityPriorityMap[entityType],
+            DatabaseProfilesFieldPriority.NonFocused,
+            ProfileMetadataPriorityMap[MetadataPriority.Summary]
+          ),
+        },
+        "getIntegerHistogram",
+        [tableName, column.name]
       ),
     ]);
   }

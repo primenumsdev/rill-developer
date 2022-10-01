@@ -22,5 +22,9 @@
       "package.json",
       "web-local/package.json"
     ]
+  },
+  "dependencies": {
+    "d3-scale-chromatic": "^3.0.0",
+    "fast-kde": "^0.2.1"
   }
 }

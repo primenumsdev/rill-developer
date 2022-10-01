@@ -1,5 +1,4 @@
-import type { DatabaseMetadata } from "./DatabaseMetadata";
-import { sanitizeColumn } from "../utils/queryUtils";
+import { linear as partiallyVendoredScaleLinear } from "@rilldata/web-local/lib/d3-scale";
 import { TIMESTAMPS } from "@rilldata/web-local/lib/duckdb-data-types";
 import type {
   CategoricalSummary,
@@ -9,7 +8,9 @@ import type {
   NumericSummary,
   TimeRangeSummary,
 } from "@rilldata/web-local/lib/types";
+import { sanitizeColumn } from "../utils/queryUtils";
 import { DatabaseActions } from "./DatabaseActions";
+import type { DatabaseMetadata } from "./DatabaseMetadata";
 
 const TOP_K_COUNT = 50;
 
@@ -170,6 +171,123 @@ export class DatabaseColumnActions extends DatabaseActions {
       FROM time_grains
       `);
     return timeGrainResult;
+  }
+
+  public async getIntegerHistogram(
+    metadata: DatabaseMetadata,
+    tableName: string,
+    columnName: string,
+    bins: number = undefined
+  ) {
+    const sanitizedColumnName = `"${columnName}"`;
+    const [stats] = await this.databaseClient.execute<{
+      min: number;
+      max: number;
+      range: number;
+    }>(`SELECT
+    min(${sanitizedColumnName}) as min,
+    max(${sanitizedColumnName}) as max,
+    max(${sanitizedColumnName}) - min(${sanitizedColumnName}) as range
+    FROM "${tableName}" WHERE ${sanitizedColumnName} IS NOT NULL`);
+
+    const scale = partiallyVendoredScaleLinear()
+      .domain([stats.min, stats.max])
+      .nice();
+    // get gap
+    const ticks = scale.ticks(Math.min(42, stats.range));
+    const startingTick = ticks[0];
+    const endingTick = ticks.slice(-1)[0];
+    const gap = ticks[1] - startingTick;
+    const range = endingTick - startingTick;
+    const bucketCount = range / gap;
+    if (isNaN(range)) {
+      // do an early return?
+      try {
+        const results = await this.databaseClient.execute(`
+        select 1 as bucket,
+        ${sanitizedColumnName} as midpoint,
+        CASE WHEN ${sanitizedColumnName} = 0 THEN -1 ELSE ${sanitizedColumnName} / 2 END as low,
+        CASE WHEN ${sanitizedColumnName} = 0 THEN 1 ELSE ${sanitizedColumnName} * 3 / 2 END as high,
+        count(*) as count
+        FROM "${tableName}"
+        WHERE ${sanitizedColumnName} IS NOT NULL
+        GROUP BY ${sanitizedColumnName};
+      `);
+
+        return { histogram: results };
+      } catch (err) {
+        console.log(err);
+        return;
+      }
+    }
+    console.log(
+      "here we are!",
+      sanitizedColumnName,
+      startingTick,
+      endingTick,
+      gap
+    );
+    const query = `
+    WITH data_table AS (
+      SELECT ${sanitizedColumnName}
+        as ${sanitizedColumnName}
+      FROM ${tableName}
+      WHERE ${sanitizedColumnName} IS NOT NULL
+    ), S AS (
+      SELECT
+        min(${sanitizedColumnName}) as minVal,
+        max(${sanitizedColumnName}) as maxVal,
+        (max(${sanitizedColumnName}) - min(${sanitizedColumnName})) as range
+        FROM data_table
+    ), values AS (
+      SELECT ${sanitizedColumnName} as value from data_table
+      WHERE ${sanitizedColumnName} IS NOT NULL
+    ),
+    -- recreate the tick range in duckdb
+    buckets AS (
+      SELECT
+        range as bucket,
+        range as low,
+        (range + (${gap})::FLOAT / 2) as midpoint,
+        range + ${gap} as high
+      FROM range(${startingTick}, ${endingTick}, ${gap})
+    ),
+    -- bin the values
+    binned_data AS (
+      SELECT
+      FLOOR(${bucketCount}::FLOAT * ((value::FLOAT - ${startingTick}) / ${range} )) * ${gap} + ${startingTick} as bucket
+      from values
+    ),
+    -- join the bucket set with the binned values to generate the histogram
+    histogram_stage AS (
+    SELECT
+        buckets.bucket,
+        low,
+        high,
+        midpoint,
+        SUM(CASE WHEN binned_data.bucket = buckets.bucket THEN 1 ELSE 0 END) as count
+      FROM buckets
+      LEFT JOIN binned_data ON binned_data.bucket = buckets.bucket
+      GROUP BY buckets.bucket, low, high, midpoint
+      ORDER BY buckets.bucket
+    ),
+    -- calculate the right edge, sine in histogram_stage we don't look at the values that
+    -- might be the largest.
+    right_edge AS (
+      SELECT count(*) as c from values WHERE value = ${endingTick}
+    )
+    SELECT
+      bucket,
+      low,
+      high,
+      midpoint,
+      -- fill in the case where we've filtered out the highest value and need to recompute it, otherwise use count.
+      CASE WHEN high = (SELECT max(high) from histogram_stage) THEN count + (select c from right_edge) ELSE count END AS count
+      FROM histogram_stage;
+        `;
+    const result = await this.databaseClient.execute(query);
+    console.log("got results");
+    return { histogram: result };
   }
 
   public async getNumericHistogram(
@@ -336,6 +454,7 @@ export class DatabaseColumnActions extends DatabaseActions {
             bucket,
             low,
             high,
+            count,
             CASE WHEN count>0 THEN true ELSE false END AS present
           FROM histrogram_with_edge
           WHERE present=true

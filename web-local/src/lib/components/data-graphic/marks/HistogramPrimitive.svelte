@@ -1,33 +1,34 @@
 <!-- @component
-  Draws an "area under the curve" shape as a <path>
-    in the order the points appear in the data.
+This primitive component plots histogram data from duckdb as a single path.
+It's not meant to be a general-purpose bar mark / geom, nor should you expect
+it to do any automatic binning of data, which is done server-side.
 -->
 <script lang="ts">
-  import { extent } from "d3-array";
-  import { getContext, onDestroy } from "svelte";
-
-  import { areaFactory } from "$lib/components/data-graphic/utils";
   import { guidGenerator } from "$lib/util/guid";
+  import { extent, max, min } from "d3-array";
+  import { getContext, onDestroy } from "svelte";
   import { contexts } from "../constants";
   import type { ExtremumResolutionStore, ScaleStore } from "../state/types";
+  import { barplotPolyline } from "../utils";
 
   const markID = guidGenerator();
 
   export let data;
-  export let curve = "curveLinear";
-  export let xAccessor = "x";
-  export let yAccessor = "y";
-
+  export let xLowAccessor;
+  export let xHighAccessor;
+  export let yAccessor;
   export let inferXExtent = true;
   export let inferYExtent = true;
-
-  export let color = "hsla(217,70%, 80%, .4)";
-  export let alpha = 1;
-
-  export let xMin = undefined;
-  export let xMax = undefined;
+  export let xMin: number = undefined;
+  export let xMax: number = undefined;
   export let yMin = undefined;
   export let yMax = undefined;
+
+  export let separator = 0.5;
+  export let closeBottom = false;
+
+  export let outlineColor = "hsla(217,40%, 60%, .9)";
+  export let color = "hsla(217,70%, 80%, .4)";
 
   const xMinStore = getContext(contexts.min("x")) as ExtremumResolutionStore;
   const xMaxStore = getContext(contexts.max("x")) as ExtremumResolutionStore;
@@ -35,18 +36,21 @@
   const yMaxStore = getContext(contexts.max("y")) as ExtremumResolutionStore;
 
   // get extents
-  $: [xMinValue, xMaxValue] = extent(data, (d) => d[xAccessor]);
+  $: xMinValue = min(data, (d) => d[xLowAccessor]);
+  $: xMaxValue = max(data, (d) => d[xHighAccessor]);
   $: [yMinValue, yMaxValue] = extent(data, (d) => d[yAccessor]);
   // set your extrema here
   $: if (inferXExtent) xMinStore.setWithKey(markID, xMin || xMinValue);
   $: if (inferXExtent) xMaxStore.setWithKey(markID, xMax || xMaxValue);
 
-  $: if (inferYExtent) yMinStore.setWithKey(markID, yMin || yMinValue);
+  $: if (inferYExtent) yMinStore.setWithKey(markID, yMin || 0);
   $: if (inferYExtent) yMaxStore.setWithKey(markID, yMax || yMaxValue);
   // we should set the extrema here.
 
-  const xScale = getContext("rill:data-graphic:x-scale") as ScaleStore;
-  const yScale = getContext("rill:data-graphic:y-scale") as ScaleStore;
+  const xScale = getContext(contexts.scale("x")) as ScaleStore;
+  const yScale = getContext(contexts.scale("y")) as ScaleStore;
+
+  const config = getContext(contexts.config);
 
   onDestroy(() => {
     if (inferXExtent) xMinStore.removeKey(markID);
@@ -55,27 +59,25 @@
     if (inferYExtent) yMaxStore.removeKey(markID);
   });
 
-  let areaFcn;
-  $: if ($xScale) {
-    areaFcn = areaFactory({
-      xScale: $xScale,
-      yScale: $yScale,
-      curve,
-      xAccessor,
-    });
-  }
+  $: d = barplotPolyline(
+    data,
+    xLowAccessor,
+    xHighAccessor,
+    yAccessor,
+    $xScale,
+    $yScale,
+    separator,
+    closeBottom
+  );
 </script>
 
-{#if areaFcn}
+{#if $xScale && $yScale}
   <defs>
     <linearGradient id="gradient-{markID}" x1="0" x2="0" y1="0" y2="1">
       <stop offset="5%" stop-color={color} />
       <stop offset="95%" stop-color={color} stop-opacity={0.3} />
     </linearGradient>
   </defs>
-  <path
-    d={areaFcn(yAccessor)(data)}
-    fill="url(#gradient-{markID})"
-    opacity={alpha}
-  />
+  <path {d} fill="url(#gradient-{markID})" />
+  <path {d} stroke={outlineColor} fill="none" />
 {/if}
