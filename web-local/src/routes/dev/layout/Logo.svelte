@@ -107,10 +107,10 @@
   const SPIN_AMOUNT = 25.2;
 
   let side = true;
-  setInterval(() => {
-    a.set(side ? 0.2 : -0.2);
-    side = !side;
-  }, time);
+  // setInterval(() => {
+  //   a.set(side ? 0.2 : -0.2);
+  //   side = !side;
+  // }, time);
 
   $: a.set(-0.2);
   $: total = $a + $spinner;
@@ -147,10 +147,10 @@
 
 <style lang="postcss">
   /* path {
-		@apply stroke-offblack;
-		transition: stroke 500ms;
-	}
-	.isDark {
-		@apply stroke-offwhite;
-	} */
+    @apply stroke-offblack;
+    transition: stroke 500ms;
+  } */
+  .isDark {
+    @apply stroke-white;
+  }
 </style>

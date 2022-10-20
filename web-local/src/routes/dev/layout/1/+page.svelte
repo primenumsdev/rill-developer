@@ -1,13 +1,13 @@
 <script>
+  import Workspace from "../Workspace.svelte";
   import Header from "./Header.svelte";
   import Nav from "./Nav.svelte";
-  import Workspace from "./Workspace.svelte";
   let input;
   let output;
   let inspector;
 </script>
 
-<div class="application">
+<div class="application surface">
   <Nav />
   <Header bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
