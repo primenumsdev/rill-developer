@@ -2,12 +2,15 @@
   import Header from "./Header.svelte";
   import Nav from "./Nav.svelte";
   import Workspace from "./Workspace.svelte";
+  let input;
+  let output;
+  let inspector;
 </script>
 
 <div class="application">
   <Nav />
-  <Header />
-  <Workspace />
+  <Header bind:input bind:output bind:inspector />
+  <Workspace {input} {output} {inspector} />
 </div>
 
 <style lang="postcss">
@@ -16,19 +19,17 @@
       Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
       "Segoe UI Symbol";
 
+    --header-height: 52px;
+    font-size: 13px;
     display: grid;
     justify-items: stretch;
     align-items: stretch;
-    grid-template-columns: [nav] 256px [body] auto;
-    grid-template-rows: [header] 52px [body] auto;
+    grid-template-columns: [nav] 272px [body] auto;
+    grid-template-rows: [header] var(--header-height) [body] auto;
     grid-template-areas:
       "nav header"
       "nav body";
 
     min-height: 100vh;
-  }
-
-  :global(.application nav) {
-    outline: 1px solid black;
   }
 </style>
