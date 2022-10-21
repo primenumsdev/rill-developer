@@ -99,7 +99,7 @@
   const series01 = manySeries();
   const series02 = manySeries(altSeries);
   let pointTween = tweened(points(0), { duration: 400 });
-  let time = 4000;
+  let time = 1000;
   let a = tweened(0.2, { duration: time - 10, easing });
   let spinner = tweened(0, { duration: 800 * 1.5, easing: spinEase });
   let RANDOM = 0;
@@ -118,7 +118,7 @@
 </script>
 
 <svg
-  class="{strokeColor || 'stroke-gray-800'} "
+  class="{strokeColor || 'stroke-blue-500'} "
   on:mouseenter={() => {
     spinner.set(SPIN_AMOUNT);
     hovered = true;
@@ -129,7 +129,6 @@
   }}
   {width}
   {height}
-  stroke="black"
 >
   <g style="transform: translate(0px, {H * 3}px)">
     {#each points(total, 0) as d, i}
@@ -140,6 +139,7 @@
         stroke-width={i === 0 ? strokeWidthTop : strokeWidthBottom}
         class:hovered
         class:isDark
+        class={i === 0 ? "stroke-blue-400" : "stroke-blue-500"}
       />
     {/each}
   </g>

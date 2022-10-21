@@ -24,7 +24,7 @@
   >
     {#if nav}
       <button class="flex items-center gap-x-2  py-2 rounded">
-        <Logo W={12} strokeWidthTop={1} strokeWidthBottom={2} />
+        <Logo W={7} strokeWidthTop={1} strokeWidthBottom={2} />
         <span class="font-bold">user_sales_project</span>
         <CaretDownIcon />
       </button>
