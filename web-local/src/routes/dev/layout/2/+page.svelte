@@ -12,7 +12,7 @@
   {#if nav}
     <Nav />
   {/if}
-  <Header bind:nav bind:input bind:output bind:inspector />
+  <Header dark bind:nav bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
 </div>
 

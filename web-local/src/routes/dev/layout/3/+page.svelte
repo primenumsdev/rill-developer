@@ -1,18 +1,15 @@
 <script>
-  import Workspace from "../Workspace.svelte";
   import Header from "./Header.svelte";
   import Nav from "./Nav.svelte";
-  let nav;
+  import Workspace from "./Workspace.svelte";
   let input;
   let output;
   let inspector;
 </script>
 
-<div class="surface application" style="--nav: {nav ? '280px' : '0px'}">
-  {#if nav}
-    <Nav />
-  {/if}
-  <Header bind:nav bind:input bind:output bind:inspector />
+<div class="application surface dark">
+  <Nav />
+  <Header bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
 </div>
 
@@ -27,10 +24,10 @@
     display: grid;
     justify-items: stretch;
     align-items: stretch;
-    grid-template-columns: [nav] var(--nav) [body] auto;
+    grid-template-columns: [nav] 272px [body] auto;
     grid-template-rows: [header] var(--header-height) [body] auto;
     grid-template-areas:
-      "header header"
+      "nav header"
       "nav body";
 
     min-height: 100vh;

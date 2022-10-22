@@ -11,68 +11,73 @@
   export let input = true;
   export let output = true;
   export let inspector = true;
+
+  export let dark = false;
 </script>
 
-<header
-  style:grid-area="header"
-  class="surface flex justify-between items-center w-full self-stretch border-b border-gray-300 shadow-md"
->
-  <div
-    style:width={nav ? "280px" : "auto"}
-    style:height="var(--header-height)"
-    class="px-2 py-2 flex gap-x-2 items-center justify-between border-r border-gray-300"
+<div class:dark style:grid-area="header">
+  <header
+    class="surface flex justify-between items-center w-full self-stretch border-b border-gray-300 dark:border-gray-600 shadow-md"
   >
-    {#if nav}
-      <button class="flex items-center gap-x-2  py-2 rounded">
-        <Logo W={7} strokeWidthTop={1} strokeWidthBottom={2} />
-        <span class="font-bold">user_sales_project</span>
-        <CaretDownIcon />
+    <div
+      style:width={nav ? "280px" : "auto"}
+      style:height="var(--header-height)"
+      class="surface px-2 py-2 flex gap-x-2 items-center justify-between border-r border-gray-300 dark:border-gray-700"
+    >
+      {#if nav}
+        <button class="flex items-center gap-x-2  py-2 rounded">
+          <Logo W={7} strokeWidthTop={1} strokeWidthBottom={2} />
+          <span class="font-bold">user_sales_project</span>
+          <CaretDownIcon />
+        </button>
+      {/if}
+      <button
+        on:click={() => {
+          nav = !nav;
+        }}
+      >
+        <HideLeftSidebar size="20px" />
       </button>
-    {/if}
-    <button
-      on:click={() => {
-        nav = !nav;
-      }}
-    >
-      <HideLeftSidebar size="20px" />
-    </button>
-  </div>
-
-  <h1 style:font-size="16px" class="grow pl-4">
-    Product KPIs <span class="text-gray-400 font-normal">/ model</span>
-  </h1>
-  <div class="flex items-center gap-x-2 pr-2">
-    <div class="flex items-center gap-x-2 px-2">
-      <button
-        class="view-button"
-        class:text-gray-400={!input}
-        on:click={() => {
-          input = !input;
-        }}><HideInput /></button
-      >
-      <button
-        class="view-button"
-        class:text-gray-400={!output}
-        on:click={() => {
-          output = !output;
-        }}><HideOutput /></button
-      >
-      <button
-        class="view-button"
-        class:text-gray-400={!inspector}
-        on:click={() => {
-          inspector = !inspector;
-        }}><HideRightSidebar /></button
-      >
     </div>
-    <button
-      class="flex items-center gap-x-2 px-4 py-2 bg-black rounded text-white"
-    >
-      <Explore />
-      Explore
-    </button>
-  </div>
-</header>
+
+    <h1 style:font-size="16px" class="grow pl-4 ui-copy">
+      Product KPIs <span class="text-gray-400 dark:text-gray-200 font-normal"
+        >/ model</span
+      >
+    </h1>
+    <div class="flex items-center gap-x-2 pr-2">
+      <div class="flex items-center gap-x-2 px-2">
+        <button
+          class="view-button"
+          class:text-gray-400={!input}
+          on:click={() => {
+            input = !input;
+          }}><HideInput /></button
+        >
+        <button
+          class="view-button"
+          class:text-gray-400={!output}
+          on:click={() => {
+            output = !output;
+          }}><HideOutput /></button
+        >
+        <button
+          class="view-button"
+          class:text-gray-400={!inspector}
+          on:click={() => {
+            inspector = !inspector;
+          }}><HideRightSidebar /></button
+        >
+      </div>
+      <button
+        class="flex items-center gap-x-2 px-4 py-2 bg-black rounded text-white"
+      >
+        <Explore />
+        Explore
+      </button>
+    </div>
+  </header>
+</div>
 
 <style lang="postcss">
   .view-button {

@@ -2,8 +2,8 @@
   import { setContext } from "svelte";
   import { writable } from "svelte/store";
 
-  import { FloatingElement } from "./index";
   import Portal from "../Portal.svelte";
+  import { FloatingElement } from "./index";
   export let location = "bottom";
   export let alignment = "middle";
   export let relationship = "parent";
