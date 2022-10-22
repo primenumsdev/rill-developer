@@ -52,12 +52,12 @@
   >
     <Tooltip distance={16}>
       <button
-        class="flex items-center gap-x-3  pl-1 pr-2 py-1 rounded hover:bg-gray-200"
+        class="flex items-center gap-x-3  pl-1 pr-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-trendy-pink-600"
       >
         <div
           style:width="20px"
           style:font-size="10px"
-          class="grid place-items-center rounded bg-gray-800 text-white dark:bg-trendy-pink-200 dark:text-trendy-pink-800"
+          class="grid place-items-center rounded bg-gray-800 text-white dark:bg-trendy-pink-300 dark:text-trendy-pink-800"
           style:height="20px"
         >
           RK
@@ -69,7 +69,7 @@
       </TooltipContent>
     </Tooltip>
     <div class="flex items-center gap-x-2">
-      <IconButton>
+      <IconButton rounded bgDark>
         <HideLeftSidebar color="gray" />
       </IconButton>
       <Tooltip location="right" distance={16}>

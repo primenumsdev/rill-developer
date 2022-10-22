@@ -65,18 +65,46 @@
                 <GridCell>Layout Areas</GridCell>
                 <GridCell side="right">
                   <div
-                    class="flex items-center gap-x-2 text-white"
+                    class="flex items-center text-white"
                     style:font-size="20px"
                   >
-                    <IconButton>
+                    <!-- <IconButton bgDark rounded> -->
+                    <button
+                      class:active={input}
+                      class="temp-icon"
+                      on:click={() => {
+                        input = !input;
+                      }}
+                    >
                       <HideInput />
-                    </IconButton>
-                    <IconButton>
+                    </button>
+                    <!-- </IconButton> -->
+                    <button
+                      class:active={output}
+                      class="temp-icon"
+                      on:click={() => {
+                        output = !output;
+                      }}
+                    >
                       <HideOutput />
-                    </IconButton>
-                    <IconButton>
+                    </button>
+                    <button
+                      class:active={inspector}
+                      class="temp-icon"
+                      on:click={() => {
+                        inspector = !inspector;
+                      }}
+                    >
                       <HideRightSidebar />
-                    </IconButton>
+                    </button>
+                  </div>
+                </GridCell>
+                <GridCell>Output</GridCell>
+                <GridCell side="right">
+                  <div class="flex items-center gap-x-1">
+                    <div>table</div>
+                    <div>nullity</div>
+                    <div>map</div>
                   </div>
                 </GridCell>
               </LeftRightGrid>
@@ -111,5 +139,14 @@
   .view-button {
     font-size: 20px;
     @apply transition-opacity;
+  }
+
+  .temp-icon {
+    width: 24px;
+    height: 24px;
+    @apply grid place-items-center text-trendy-pink-300 transition-colors;
+  }
+  .active {
+    @apply bg-trendy-pink-600 text-trendy-pink-100;
   }
 </style>
