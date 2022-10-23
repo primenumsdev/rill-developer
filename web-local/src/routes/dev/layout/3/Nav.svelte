@@ -1,19 +1,33 @@
 <script lang="ts">
   import IconButton from "@rilldata/web-local/lib/components/button/IconButton.svelte";
+  import Add from "@rilldata/web-local/lib/components/icons/Add.svelte";
   import CaretDownIcon from "@rilldata/web-local/lib/components/icons/CaretDownIcon.svelte";
-  import Explore from "@rilldata/web-local/lib/components/icons/Explore.svelte";
-  import HideLeftSidebar from "@rilldata/web-local/lib/components/icons/HideLeftSidebar.svelte";
-  import Tooltip from "@rilldata/web-local/lib/components/tooltip/Tooltip.svelte";
-  import TooltipContent from "@rilldata/web-local/lib/components/tooltip/TooltipContent.svelte";
-
   import Discord from "@rilldata/web-local/lib/components/icons/Discord.svelte";
   import Docs from "@rilldata/web-local/lib/components/icons/Docs.svelte";
+  import Explore from "@rilldata/web-local/lib/components/icons/Explore.svelte";
   import Github from "@rilldata/web-local/lib/components/icons/Github.svelte";
+  import HideLeftSidebar from "@rilldata/web-local/lib/components/icons/HideLeftSidebar.svelte";
   import InfoCircle from "@rilldata/web-local/lib/components/icons/InfoCircle.svelte";
+  import Metrics from "@rilldata/web-local/lib/components/icons/Metrics.svelte";
+  import Model from "@rilldata/web-local/lib/components/icons/Model.svelte";
+  import Search from "@rilldata/web-local/lib/components/icons/Search.svelte";
+  import Source from "@rilldata/web-local/lib/components/icons/Source.svelte";
+  import Tooltip from "@rilldata/web-local/lib/components/tooltip/Tooltip.svelte";
+  import TooltipContent from "@rilldata/web-local/lib/components/tooltip/TooltipContent.svelte";
   import TooltipTitle from "@rilldata/web-local/lib/components/tooltip/TooltipTitle.svelte";
   import type { ApplicationMetadata } from "@rilldata/web-local/lib/types";
   import { getContext } from "svelte";
   import { fly } from "svelte/transition";
+
+  const dashboards = [
+    {
+      name: "Product KPIs",
+      open: true,
+      sources: ["github_stars", "rill_developer_events"],
+    },
+    { name: "Github Engagement", open: false },
+    { name: "Github Referred Sources", open: true },
+  ];
 
   const metadata: ApplicationMetadata = getContext("rill:app:metadata");
 
@@ -40,6 +54,8 @@
       shrinkIcon: true,
     },
   ];
+
+  const itemHover = "hover:bg-gray-200 dark:hover:bg-trendy-pink-800 rounded";
 </script>
 
 <nav
@@ -96,14 +112,17 @@
         ><Explore /> New Dashboard
       </button>
     </section>
-    <!-- <section>
-      <h2>Sources</h2>
-      {#each ["discord_invites", "github_clones", "github_paths", "github_referrers", "github_views", "github_stargazers", "github_views", "google_analytics", "rill_product_events", "retention_test"] as source}
-        <div style:height="24px" class="flex gap-x-2 items-center">
-          {source}
-        </div>
-      {/each}
-    </section> -->
+
+    <section class="flex items-center gap-x-2 pb-12">
+      <IconButton compact>
+        <Search />
+      </IconButton>
+      <div class="flex items-center gap-x-4">
+        <button>Dashboards</button>
+        <button class="text-gray-500 dark:text-trendy-pink-500">Files</button>
+      </div>
+    </section>
+
     <section>
       <h2
         style:font-size=".75rem"
@@ -111,16 +130,51 @@
       >
         Your Dashboards
       </h2>
-      {#each ["Product KPIs", "Github Engagement", "Github Referred Sources"] as dashboard}
-        <div
-          style:height="24px"
-          class="flex items-center gap-x-1 dark:text-trendy-pink-100"
-        >
-          <div class="-rotate-90">
-            <CaretDownIcon />
+      {#each dashboards as { name, sources, open }}
+        <section class="dashboard">
+          <div
+            class="{itemHover} dashboard flex items-center gap-x-2 dark:text-trendy-pink-100"
+          >
+            <button class="{open ? '' : '-rotate-90'} flex place-items-center">
+              <CaretDownIcon size="14px" />
+            </button>
+            {name}
           </div>
-          {dashboard}
-        </div>
+          {#if open}
+            <div
+              class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
+            >
+              <span class="flex items-center gap-x-2">
+                {#if sources?.length}<Source size="14px" /> Sources
+                {:else}
+                  <Add />
+                  <span class="italic">Add your first source</span>{/if}
+              </span>
+            </div>
+            {#if sources?.length}
+              <section
+                style:transform="translateX(-.125rem)"
+                class="ml-7 border-l-2 border-gray-200 dark:border-trendy-pink-600 dark:text-trendy-pink-300"
+              >
+                {#each sources as source}
+                  <div class="{itemHover} px-2 ml-2 flex items-center">
+                    {source}
+                  </div>
+                {/each}
+              </section>
+            {/if}
+            <div
+              class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
+            >
+              <Model size="14px" /> Model
+            </div>
+            <div
+              class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
+            >
+              <Metrics size="14px" /> Metrics
+            </div>
+          {/if}
+        </section>
       {/each}
     </section>
   </div>
@@ -191,5 +245,10 @@
 
   h2 {
     @apply flex items-center justify-between;
+  }
+
+  .dashboard div {
+    height: 27px;
+    margin-bottom: 2px;
   }
 </style>

@@ -61,11 +61,38 @@
             on:click-outside={toggleFloatingElement}
           >
             <div class="text-white p-4">
-              <LeftRightGrid>
-                <GridCell>Layout Areas</GridCell>
+              <LeftRightGrid gapY="gap-y-4">
+                <GridCell
+                  ><span class="text-trendy-pink-300">Input</span></GridCell
+                >
+                <GridCell side="right">
+                  <select
+                    class="px-1 w-full border rounded border-trendy-pink-500 bg-trendy-pink-700 flex items-center gap-x-1 bg-transparent text-trendy-pink-100"
+                  >
+                    <option>Code</option>
+                    <option>Visual</option>
+                  </select>
+                </GridCell>
+                <GridCell
+                  ><span class="text-trendy-pink-300">Output</span></GridCell
+                >
+                <GridCell side="right">
+                  <select
+                    class="px-1 border rounded border-trendy-pink-500 bg-trendy-pink-700 w-full flex items-center gap-x-1 bg-transparent text-trendy-pink-100"
+                  >
+                    <option>Table</option>
+                    <option>Null Map</option>
+                    <option>Value Map</option>
+                  </select>
+                </GridCell>
+
+                <GridCell
+                  ><span class="text-trendy-pink-300">Layout Areas</span
+                  ></GridCell
+                >
                 <GridCell side="right">
                   <div
-                    class="flex items-center text-white"
+                    class="flex items-center text-white justify-self-end"
                     style:font-size="20px"
                   >
                     <!-- <IconButton bgDark rounded> -->
@@ -97,14 +124,6 @@
                     >
                       <HideRightSidebar />
                     </button>
-                  </div>
-                </GridCell>
-                <GridCell>Output</GridCell>
-                <GridCell side="right">
-                  <div class="flex items-center gap-x-1">
-                    <div>table</div>
-                    <div>nullity</div>
-                    <div>map</div>
                   </div>
                 </GridCell>
               </LeftRightGrid>
