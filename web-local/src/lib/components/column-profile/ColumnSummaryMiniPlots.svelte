@@ -17,9 +17,9 @@
     singleDigitPercentage,
   } from "../../util/formatters";
 
-  import Histogram from "../viz/histogram/SmallHistogram.svelte";
   import { convertTimestampPreview } from "../../util/convertTimestampPreview";
   import { TimestampSpark } from "../data-graphic/compositions/timestamp-profile";
+  import Histogram from "../viz/histogram/SmallHistogram.svelte";
 
   export let type;
   export let summary;
@@ -56,7 +56,9 @@
             color={DATA_TYPE_COLORS["VARCHAR"].bgClass}
             value={summary?.cardinality / totalRows}
           >
-            |{cardinalityFormatter(summary?.cardinality)}|
+            <span class="tabular">
+              |{cardinalityFormatter(summary?.cardinality)}|
+            </span>
           </BarAndLabel>
           <TooltipContent slot="tooltip-content">
             {formatInteger(summary?.cardinality)} unique values
@@ -161,3 +163,8 @@
     />
   </TooltipContent>
 </Tooltip>
+
+<style>
+  .tabular {
+  }
+</style>

@@ -1,6 +1,7 @@
 <script>
-  import { setContext } from "svelte";
+  import { getContext, setContext } from "svelte";
   import { writable } from "svelte/store";
+  import ModelInspector from "./ModelInspector.svelte";
 
   export let input = true;
   export let output = true;
@@ -11,6 +12,8 @@
   const dts = writable({ entities: [{ id: 1 }] });
   setContext("rill:app:persistent-table-store", pts);
   setContext("rill:app:derived-table-store", dts);
+  const m = getContext("rill:app:derived-model-store");
+  $: console.log($m);
 </script>
 
 <main style:grid-area="body" class="surface">
@@ -38,9 +41,11 @@
     <div
       class:set-border={mode === "surface"}
       class:surface={mode === "surface"}
-      class=" inspector placeholder"
+      class=" inspector "
     >
-      inspector
+      {#if m && $m?.entities && $m?.entities?.[0]}
+        <ModelInspector model={$m?.entities[0]} />
+      {/if}
     </div>
   {/if}
 </main>

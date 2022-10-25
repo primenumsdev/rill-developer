@@ -15,9 +15,7 @@
 
 <style lang="postcss">
   .application {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-      "Segoe UI Symbol";
+    font-family: "Inter";
 
     --header-height: 52px;
     font-size: 13px;
