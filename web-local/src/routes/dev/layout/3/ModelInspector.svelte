@@ -1,14 +1,28 @@
 <script lang="ts">
   import ColumnSummaryMiniPlots from "@rilldata/web-local/lib/components/column-profile/ColumnSummaryMiniPlots.svelte";
+  import { defaultSort } from "@rilldata/web-local/lib/components/column-profile/sort-utils";
   import DataTypeIcon from "@rilldata/web-local/lib/components/data-types/DataTypeIcon.svelte";
 
   export let model;
+
+  $: profileList = model.profile;
+  let sortedProfile;
+  let sortMethod = defaultSort;
+  const sortByOriginalOrder = null;
+
+  $: if (sortMethod !== sortByOriginalOrder) {
+    sortedProfile = [...profileList].sort(sortMethod);
+  } else {
+    sortedProfile = profileList;
+  }
 </script>
 
 <section>
-  {#each model?.profile as profile}
+  <h2>Columns</h2>
+  {#each sortedProfile as profile}
     <button
-      class="block grid w-full items-center gap-x-1"
+      style:height="22px"
+      class="px-2 block grid w-full items-center gap-x-1 hover:bg-gray-100 dark:hover:bg-trendy-pink-800"
       style:grid-template-columns="max-content 1fr max-content"
     >
       <div>

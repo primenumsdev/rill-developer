@@ -53,11 +53,15 @@
       {#if CATEGORICALS.has(type) && summary?.cardinality}
         <Tooltip location="right" alignment="center" distance={8}>
           <BarAndLabel
+            showBackground={false}
             color={DATA_TYPE_COLORS["VARCHAR"].bgClass}
             value={summary?.cardinality / totalRows}
           >
-            <span class="tabular">
-              |{cardinalityFormatter(summary?.cardinality)}|
+            <span
+              class="tabular text-gray-600 dark:text-trendy-pink-100 border-l border-r border-gray-400 dark:border-trendy-pink-400 px-[2px]"
+              style:font-size="12px"
+            >
+              {cardinalityFormatter(summary?.cardinality)}
             </span>
           </BarAndLabel>
           <TooltipContent slot="tooltip-content">
@@ -119,12 +123,19 @@
     {#if totalRows !== 0 && totalRows !== undefined && nullCount !== undefined}
       <Tooltip location="right" alignment="center" distance={8}>
         <BarAndLabel
-          showBackground={nullCount !== 0}
+          showBackground={false}
           color={DATA_TYPE_COLORS[type]?.bgClass}
           value={nullCount / totalRows || 0}
         >
-          <span class:text-gray-300={nullCount === 0}
-            >∅ {singleDigitPercentage(nullCount / totalRows)}</span
+          <span
+            class="tabular"
+            style:font-size="12px"
+            class:text-gray-300={nullCount === 0}
+            ><span
+              class="text-gray-400 dark:text-trendy-pink-300"
+              style:font-size="11px">∅</span
+            >
+            {singleDigitPercentage(nullCount / totalRows)}</span
           >
         </BarAndLabel>
         <TooltipContent slot="tooltip-content">
@@ -166,5 +177,11 @@
 
 <style>
   .tabular {
+    font-feature-settings: "case" 0, "cpsp" 0, "dlig" 0, "frac" 0, "dnom" 0,
+      "numr" 0, "salt" 0, "subs" 0, "sups" 0, "tnum", "zero" 1, "ss01" 0,
+      "ss02" 0, "ss03" 0, "ss04" 0, "cv01" 0, "cv02" 0, "cv03" 0, "cv04" 0,
+      "cv05" 0, "cv06" 0, "cv07" 0, "cv08" 0, "cv09" 0, "cv10" 0, "cv11" 0,
+      "calt", "ccmp", "kern";
+    letter-spacing: -0.25px;
   }
 </style>

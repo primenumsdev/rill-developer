@@ -7,7 +7,7 @@
   let inspector;
 </script>
 
-<div class="application surface dark">
+<div class="application surface dark h-screen">
   <Nav />
   <Header bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
@@ -30,6 +30,6 @@
       "nav header"
       "nav body";
 
-    min-height: 100vh;
+    max-height: 100vh;
   }
 </style>

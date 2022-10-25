@@ -74,14 +74,14 @@ interface ColorTokens {
 
 export const CATEGORICAL_TOKENS: ColorTokens = {
   textClass: "text-sky-800 dark:text-sky-200",
-  bgClass: "bg-sky-200 dark:bg-sky-600",
+  bgClass: "bg-sky-200 dark:bg-sky-800",
   vizFillClass: "fill-sky-800 dark:fill-sky-200",
   vizStrokeClass: "stroke-sky-800 dark:stroke-sky-200",
 };
 
 export const NUMERIC_TOKENS: ColorTokens = {
   textClass: "text-red-800",
-  bgClass: "bg-red-200",
+  bgClass: "bg-red-200 dark:bg-red-900",
   vizFillClass: "fill-red-300",
   vizStrokeClass: "stroke-red-300",
 };
