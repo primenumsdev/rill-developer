@@ -2,6 +2,7 @@
   import { getContext, setContext } from "svelte";
   import { writable } from "svelte/store";
   import InputRegion from "./InputRegion.svelte";
+  import ModelInspector from "./ModelInspector.svelte";
   export let input = true;
   export let output = true;
   export let inspector = true;
@@ -42,7 +43,7 @@
       class=" inspector "
     >
       {#if m && $m?.entities && $m?.entities?.[0]}
-        <!-- <ModelInspector model={$m?.entities[0]} /> -->
+        <ModelInspector model={$m?.entities[0]} />
       {/if}
     </div>
   {/if}
