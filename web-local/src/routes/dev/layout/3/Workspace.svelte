@@ -53,7 +53,7 @@
   main {
     display: grid;
     grid-template-columns: [body] 1fr [inspector] max-content;
-    padding: 8px;
+    /* padding: 8px; */
     padding-top: 0px;
   }
 
@@ -77,5 +77,6 @@
 
   .inspector {
     width: 400px;
+    overflow: auto;
   }
 </style>

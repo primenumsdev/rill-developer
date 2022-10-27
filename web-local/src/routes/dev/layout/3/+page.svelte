@@ -7,7 +7,7 @@
   let inspector;
 </script>
 
-<div class="application surface  h-screen">
+<div class="application surface dark">
   <Nav />
   <Header bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
@@ -25,11 +25,11 @@
     justify-items: stretch;
     align-items: stretch;
     grid-template-columns: [nav] 272px [body] auto;
-    grid-template-rows: [header] var(--header-height) [body] auto;
+    grid-template-rows: [header] var(--header-height) [body] calc(
+        100vh - var(--header-height)
+      );
     grid-template-areas:
       "nav header"
       "nav body";
-
-    max-height: 100vh;
   }
 </style>

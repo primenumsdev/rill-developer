@@ -9,10 +9,11 @@
   import LeftRightGrid from "@rilldata/web-local/lib/components/left-right-grid/LeftRightGrid.svelte";
   import { Menu, MenuItem } from "@rilldata/web-local/lib/components/menu";
   import Divider from "@rilldata/web-local/lib/components/menu/core/Divider.svelte";
+  import { fly } from "svelte/transition";
   import HideInput from "../2/HideInput.svelte";
   import HideOutput from "../2/HideOutput.svelte";
+  import dashboards from "./dashboards";
   import Mixer from "./Mixer.svelte";
-
   export let input = true;
   export let output = true;
   export let inspector = true;
@@ -22,10 +23,76 @@
   style:grid-area="header"
   class="flex justify-between items-center w-full self-stretch pl-4 pr-2 surface"
 >
-  <h1 class="dark:text-trendy-pink-100">
-    Product KPIs <span
-      class="text-gray-400 dark:text-trendy-pink-400 font-normal">/ Model</span
+  <h1 class="dark:text-trendy-pink-100 flex items-center">
+    <WithTogglableFloatingElement
+      let:toggleFloatingElement
+      let:active
+      alignment="start"
+      distance={8}
     >
+      <button
+        class="flex items-center px-2 py-1 gap-x-1 {!active &&
+          'hover:bg-gray-100 dark:hover:bg-trendy-pink-600'} 
+          {active && 'bg-gray-200 dark:bg-trendy-pink-600'}
+          rounded"
+        on:click={toggleFloatingElement}>Product KPIs <CaretDownIcon /></button
+      >
+      <div
+        slot="floating-element"
+        in:fly={{ duration: 200, y: -4 }}
+        out:fly={{ duration: 200, y: 4 }}
+      >
+        <Menu
+          dark
+          on:item-select={toggleFloatingElement}
+          on:escape={toggleFloatingElement}
+          on:click-outside={toggleFloatingElement}
+        >
+          {#each dashboards as dash}
+            <MenuItem>
+              {dash.name}
+            </MenuItem>
+          {/each}
+        </Menu>
+      </div>
+    </WithTogglableFloatingElement>
+    <span class="text-gray-400 dark:text-trendy-pink-400 font-normal px-2"
+      >/</span
+    >
+    <span class="text-gray-400 dark:text-trendy-pink-400 font-normal">
+      <WithTogglableFloatingElement
+        let:active
+        let:toggleFloatingElement
+        distance={8}
+        alignment="start"
+      >
+        <button
+          class:bg-gray-200={active}
+          class="flex items-center px-2 py-1 gap-x-1 {!active &&
+            'hover:bg-gray-100 dark:hover:bg-trendy-pink-600'} 
+            {active && 'bg-gray-200 dark:bg-trendy-pink-600'} rounded"
+          on:click={toggleFloatingElement}>Model <CaretDownIcon /></button
+        >
+        <div
+          slot="floating-element"
+          in:fly={{ duration: 200, y: -4 }}
+          out:fly={{ duration: 200, y: 4 }}
+        >
+          <Menu
+            dark
+            on:item-select={toggleFloatingElement}
+            on:escape={toggleFloatingElement}
+            on:click-outside={toggleFloatingElement}
+          >
+            {#each dashboards[0].sources as source}
+              <MenuItem>
+                {source}
+              </MenuItem>
+            {/each}
+          </Menu>
+        </div>
+      </WithTogglableFloatingElement>
+    </span>
   </h1>
   <div class="flex items-center gap-x-2">
     <div class="flex items-center gap-x-2">

@@ -18,16 +18,7 @@
   import type { ApplicationMetadata } from "@rilldata/web-local/lib/types";
   import { getContext } from "svelte";
   import { fly } from "svelte/transition";
-
-  const dashboards = [
-    {
-      name: "Product KPIs",
-      open: true,
-      sources: ["github_stars", "rill_developer_events"],
-    },
-    { name: "Github Engagement", open: false },
-    { name: "Github Referred Sources", open: true },
-  ];
+  import dashboards from "./dashboards";
 
   const metadata: ApplicationMetadata = getContext("rill:app:metadata");
 
