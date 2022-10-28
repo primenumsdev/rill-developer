@@ -13,35 +13,36 @@
   import { waitUntil } from "@rilldata/web-local/common/utils/waitUtils";
   import { getContext, onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import type { ApplicationStore } from "../../application-state-stores/application-store";
-  import type { DerivedModelStore } from "../../application-state-stores/model-stores";
-  import { navigationEvent } from "../../metrics/initMetrics";
+  import type { ApplicationStore } from "../../../application-state-stores/application-store";
+  import type { DerivedModelStore } from "../../../application-state-stores/model-stores";
+  import { navigationEvent } from "../../../metrics/initMetrics";
   import {
     createMetricsDefsAndFocusApi,
     deleteMetricsDefsApi,
     fetchManyMetricsDefsApi,
     validateSelectedSources,
-  } from "../../redux-store/metrics-definition/metrics-definition-apis";
-  import { getAllMetricsDefinitionsReadable } from "../../redux-store/metrics-definition/metrics-definition-readables";
-  import { store } from "../../redux-store/store-root";
-  import CollapsibleSectionTitle from "../CollapsibleSectionTitle.svelte";
-  import CollapsibleTableSummary from "../column-profile/CollapsibleTableSummary.svelte";
-  import ContextButton from "../column-profile/ContextButton.svelte";
-  import AddIcon from "../icons/Add.svelte";
-  import Cancel from "../icons/Cancel.svelte";
-  import EditIcon from "../icons/EditIcon.svelte";
-  import { default as Explore } from "../icons/Explore.svelte";
-  import MetricsIcon from "../icons/Metrics.svelte";
-  import Model from "../icons/Model.svelte";
-  import { Divider, MenuItem } from "../menu";
-  import MetricsDefinitionSummary from "../metrics-definition/MetricsDefinitionSummary.svelte";
-  import RenameEntityModal from "../modal/RenameEntityModal.svelte";
+  } from "../../../redux-store/metrics-definition/metrics-definition-apis";
+  import { getAllMetricsDefinitionsReadable } from "../../../redux-store/metrics-definition/metrics-definition-readables";
+  import { store } from "../../../redux-store/store-root";
+  import CollapsibleSectionTitle from "../../CollapsibleSectionTitle.svelte";
+  import CollapsibleTableSummary from "../../column-profile/CollapsibleTableSummary.svelte";
+  import ContextButton from "../../column-profile/ContextButton.svelte";
+  import AddIcon from "../../icons/Add.svelte";
+  import Cancel from "../../icons/Cancel.svelte";
+  import EditIcon from "../../icons/EditIcon.svelte";
+  import { default as Explore } from "../../icons/Explore.svelte";
+  import MetricsIcon from "../../icons/Metrics.svelte";
+  import Model from "../../icons/Model.svelte";
+  import { Divider, MenuItem } from "../../menu";
+  import MetricsDefinitionSummary from "../../metrics-definition/MetricsDefinitionSummary.svelte";
+  import RenameAssetModal from "../RenameAssetModal.svelte";
 
   const metricsDefinitions = getAllMetricsDefinitionsReadable();
   const appStore = getContext("rill:app:store") as ApplicationStore;
   const derivedModelStore = getContext(
     "rill:app:derived-model-store"
   ) as DerivedModelStore;
+  const applicationStore = getContext("rill:app:store") as ApplicationStore;
 
   let showMetricsDefs = true;
 
@@ -105,12 +106,17 @@
   };
 
   const deleteMetricsDef = (id: string) => {
-    const nextMetricsDefId = getNextEntityId($metricsDefinitions, id);
+    if (
+      $applicationStore.activeEntity.type === EntityType.MetricsDefinition &&
+      $applicationStore.activeEntity.id === id
+    ) {
+      const nextMetricsDefId = getNextEntityId($metricsDefinitions, id);
 
-    if (nextMetricsDefId) {
-      goto(`/dashboard/${nextMetricsDefId}`);
-    } else {
-      goto("/");
+      if (nextMetricsDefId) {
+        goto(`/dashboard/${nextMetricsDefId}`);
+      } else {
+        goto("/");
+      }
     }
 
     store.dispatch(deleteMetricsDefsApi(id));
@@ -216,11 +222,11 @@
     {/each}
   </div>
   {#if showRenameMetricsDefinitionModal}
-    <RenameEntityModal
+    <RenameAssetModal
       entityType={EntityType.MetricsDefinition}
       closeModal={() => (showRenameMetricsDefinitionModal = false)}
       entityId={renameMetricsDefId}
-      currentEntityName={renameMetricsDefName}
+      currentAssetName={renameMetricsDefName}
     />
   {/if}
 {/if}
