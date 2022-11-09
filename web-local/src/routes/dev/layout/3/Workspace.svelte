@@ -1,8 +1,6 @@
 <script>
   import { getContext, setContext } from "svelte";
   import { writable } from "svelte/store";
-  import InputRegion from "./InputRegion.svelte";
-  import ModelInspector from "./ModelInspector.svelte";
   export let input = true;
   export let output = true;
   export let inspector = true;
@@ -21,9 +19,9 @@
       <div
         class:set-border={mode === "surface"}
         class:surface={mode === "surface"}
-        class="grow input"
+        class="grow input placeholder"
       >
-        <InputRegion />
+        input region
       </div>
     {/if}
     {#if output}
@@ -40,11 +38,12 @@
     <div
       class:set-border={mode === "surface"}
       class:surface={mode === "surface"}
-      class=" inspector "
+      class=" inspector placeholder"
     >
-      {#if m && $m?.entities && $m?.entities?.[0]}
+      inspector
+      <!-- {#if m && $m?.entities && $m?.entities?.[0]}
         <ModelInspector model={$m?.entities[0]} />
-      {/if}
+      {/if} -->
     </div>
   {/if}
 </main>
@@ -53,7 +52,8 @@
   main {
     display: grid;
     grid-template-columns: [body] 1fr [inspector] max-content;
-    /* padding: 8px; */
+    grid-gap: 0.5rem;
+    padding-left: 0.5rem;
     padding-top: 0px;
   }
 
@@ -62,7 +62,7 @@
   }
 
   .set-border {
-    @apply border border-gray-300;
+    @apply border border-gray-200;
   }
 
   :global(.dark .set-border) {
@@ -70,6 +70,7 @@
   }
 
   .input {
+    margin-bottom: 0.4rem;
   }
 
   .output {

@@ -7,7 +7,7 @@
   let inspector;
 </script>
 
-<div class="application surface dark">
+<div class="application surface">
   <Nav />
   <Header bind:input bind:output bind:inspector />
   <Workspace {input} {output} {inspector} />
