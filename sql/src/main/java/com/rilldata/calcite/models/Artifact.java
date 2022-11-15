@@ -1,15 +1,20 @@
 package com.rilldata.calcite.models;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
-public class Artifact implements Serializable
+public class Artifact
 {
   private final ArtifactType type;
   private final String name;
   private final String payload;
 
-  public Artifact(ArtifactType type, String name, String payload)
+  public Artifact(
+      @JsonProperty("name") String name,
+      @JsonProperty("type") ArtifactType type,
+      @JsonProperty("payload") String payload
+  )
   {
     this.type = type;
     this.name = name;

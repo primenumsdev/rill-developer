@@ -20,32 +20,37 @@ const sidebars = {
     {
       type: 'doc',
       id: 'README',
-      label: 'Get Started',
-    },
-    {
-      type: 'category',
-      label: 'Install',
-      items: ['install/binary', 'install/docker', 'install/npm'],
+      label: 'Get started',
     },
     {
       type: 'doc',
-      id: 'defining-metrics',
-      label: 'Defining Metrics',
+      id: 'install',
+      label: 'Install Rill',
     },
     {
-      type: 'category',
-      label: 'SQL Dialects',
-      items: ['sqldialects/duck-sql'],
+      type: 'doc',
+      id: 'import-data',
+      label: 'Import data source',
+    },
+    {
+      type: 'doc',
+      id: 'sql-models',
+      label: 'Model SQL transformations',
+    },
+    {
+      type: 'doc',
+      id: 'metrics-dashboard',
+      label: 'Define metrics dashboard',
     },
     {
       type: 'doc',
       id: 'cli',
-      label: 'CLI Documentation',
+      label: 'CLI documentation',
     },
     {
       type: 'category',
       label: 'Contributors',
-      items: ['contributors/development', 'contributors/guidelines', 'contributors/local-testing'],
+      items: ['contributors/development', 'contributors/local-testing', 'contributors/guidelines'],
     },
   ],
 };

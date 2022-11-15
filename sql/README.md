@@ -1,8 +1,13 @@
+# sql
+
+This folder contains a SQL parser and transpiler based on Apache Calcite.
+
 ## SQL parser and protobuf builder generation
 Please run `mvn package` in the module to generate the custom SQL parser and protobuf builder classes.
 You need to have proto compiler installed on the system, here are some resources for installation instructions - 
 1. http://google.github.io/proto-lens/installing-protoc.html
 2. https://github.com/protocolbuffers/protobuf#protocol-compiler-installation
+
 ### Code generation paths -
 * Custom parser will be generated in `target/generated-sources/javacc` folder
 * Protobuf classes will be generated in `target/generated-sources/annotations` folder
@@ -44,3 +49,20 @@ It can be necessary to run the target application more than once with different 
 for a better coverage of dynamic accesses. In case native-image compiler will start to complain or native-executable will produce
 exceptions about unknown classes then Tracing Agent can help to identify new configuration entries and merge them to the existing 
 configuration.
+
+## Releasing for macOS on arm64
+
+Github Actions do not currently support arm64 runners and GraalVM does not support cross-compilation from amd64 to arm64. In the future, we may set up a self-hosted runner, but for now, we deal with this problem by releasing directly from a local machine.
+
+The prerequisites for releasing a new version of `librillsql` from your local are:
+
+- Must run on an ARM Mac
+- Must run from repo root
+- Must have gsutil (Google Cloud SDK) installed and authenticated
+- Must have upload access to the pkg.rilldata.com bucket
+
+Given the above, you can release by running:
+
+```sh
+./sql/scripts/release-macos-arm64.sh 
+```

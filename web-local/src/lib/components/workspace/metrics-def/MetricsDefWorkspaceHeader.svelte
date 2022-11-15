@@ -1,11 +1,11 @@
 <script lang="ts">
   import { MetricsSourceSelectionError } from "@rilldata/web-local/common/errors/ErrorMessages";
-  import MetricsIcon from "../../icons/Metrics.svelte";
-  import MetricsDefinitionExploreMetricsButton from "../../metrics-definition/MetricsDefinitionExploreMetricsButton.svelte";
   import { updateMetricsDefsWrapperApi } from "../../../redux-store/metrics-definition/metrics-definition-apis";
   import { getMetricsDefReadableById } from "../../../redux-store/metrics-definition/metrics-definition-readables";
   import { store } from "../../../redux-store/store-root";
-  import WorkspaceHeader from "../WorkspaceHeader.svelte";
+  import MetricsIcon from "../../icons/Metrics.svelte";
+  import MetricsDefinitionExploreMetricsButton from "../../metrics-definition/MetricsDefinitionExploreMetricsButton.svelte";
+  import WorkspaceHeader from "../core/WorkspaceHeader.svelte";
 
   export let metricsDefId;
 
@@ -32,9 +32,7 @@
   style:grid-template-columns="auto max-content"
 >
   <WorkspaceHeader {...{ titleInput, onChangeCallback }} showStatus={false}>
-    <svelte:fragment slot="icon">
-      <MetricsIcon />
-    </svelte:fragment>
+    <MetricsIcon slot="icon" />
   </WorkspaceHeader>
 
   {#if !metricsSourceSelectionError}

@@ -3,15 +3,16 @@
 
   import { createEventDispatcher, getContext } from "svelte";
 
-  import type { HeaderPosition } from "../types";
-  import type { VirtualizedTableConfig } from "../types";
+  import type { HeaderPosition, VirtualizedTableConfig } from "../types";
 
   const config: VirtualizedTableConfig = getContext("config");
+  const isDimensionTable = config.table === "DimensionTable";
 
   const dispatch = createEventDispatcher();
   export let header;
   export let position: HeaderPosition = "top";
   export let enableResize = true;
+  export let borderRight = false;
 
   let positionClasses;
   let offsetTop = false;
@@ -22,12 +23,24 @@
       positionClasses = "absolute left-0 top-0 text-center font-semibold";
       offsetTop = true;
     } else if (position === "top-left") {
-      positionClasses = "sticky left-0 top-0 z-40  font-bold";
+      positionClasses = "sticky left-0 top-0 z-40 font-bold";
     }
   }
 
+  $: borderClassesOuterDiv =
+    (borderRight ? "border-r " : "") +
+    (isDimensionTable
+      ? position === "left"
+        ? ""
+        : "border-b"
+      : "border-b border-b-4 border-r border-r-1");
+
+  const borderClassesInnerDiv = isDimensionTable
+    ? ""
+    : "whitespace-nowrap border border-gray-200 border-t-0 border-l-0 bg-gray-100";
+
   const paddingVerticalTop = config.columnHeaderHeight <= 28 ? "py-1" : "py-2";
-  const paddingVerticalLeft = config.rowHeight <= 28 ? "py-0.5" : "py-2";
+  const paddingVerticalLeft = config.rowHeight <= 28 ? "" : "py-2";
 
   function focus() {
     dispatch("focus");
@@ -50,21 +63,21 @@
     ? config.rowHeight
     : config.columnHeaderHeight}px"
   class="{positionClasses}
-   bg-white text-left border-b border-b-4 border-r border-r-1"
+   surface text-left {borderClassesOuterDiv}"
 >
   <div
     class="
-    text-ellipsis overflow-hidden whitespace-nowrap
-  px-4
-  border
-  border-gray-200
-  border-t-0
-  border-l-0
-  bg-gray-100
-  {position === 'top' && `${paddingVerticalTop} text-left`}
-  {position === 'left' && paddingVerticalLeft}
-  {position === 'top-left' && `${paddingVerticalTop} text-center`}
-"
+    ui-copy
+    text-ellipsis overflow-hidden
+    {isDimensionTable ? (position === 'left' ? '' : 'px-1') : 'px-4'}
+    {borderClassesInnerDiv}
+    {position === 'top' && `${paddingVerticalTop} text-left`}
+    {position === 'left' && paddingVerticalLeft}
+    {position === 'top-left' &&
+      `${paddingVerticalTop} ${
+        isDimensionTable ? 'font-normal' : 'text-center'
+      }`}
+    "
   >
     <slot />
     {#if enableResize}

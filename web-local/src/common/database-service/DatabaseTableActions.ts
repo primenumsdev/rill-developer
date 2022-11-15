@@ -1,7 +1,11 @@
-import type { DatabaseMetadata } from "./DatabaseMetadata";
+import {
+  escapeColumn,
+  escapeColumnAlias,
+} from "@rilldata/web-local/common/database-service/columnUtils";
 import type { ProfileColumn } from "@rilldata/web-local/lib/types";
 import { guidGenerator } from "@rilldata/web-local/lib/util/guid";
 import { DatabaseActions } from "./DatabaseActions";
+import type { DatabaseMetadata } from "./DatabaseMetadata";
 
 export class DatabaseTableActions extends DatabaseActions {
   public async createViewOfQuery(
@@ -11,6 +15,16 @@ export class DatabaseTableActions extends DatabaseActions {
   ): Promise<void> {
     await this.databaseClient.execute(`-- wrapQueryAsTemporaryView
             CREATE OR REPLACE TEMPORARY VIEW "${tableName}" AS (${query});`);
+  }
+
+  public async renameView(
+    metadata: DatabaseMetadata,
+    tableName: string,
+    newTableName: string
+  ): Promise<void> {
+    await this.databaseClient.execute(
+      `ALTER VIEW ${tableName} RENAME TO ${newTableName};`
+    );
   }
 
   public async getFirstNOfTable(
@@ -40,34 +54,6 @@ export class DatabaseTableActions extends DatabaseActions {
     return cardinality.count;
   }
 
-  private async getMinAndMaxStringLengthsOfAllColumns(
-    table: string,
-    columns: ProfileColumn[]
-  ) {
-    /** get columns */
-    // template in the column mins and maxes.
-    // treat categoricals a little differently; all they have is length.
-    const minAndMax = columns
-      .map(
-        (column) => `min(length("${column.name}")) as "min_${column.name}", 
-        max(length("${column.name}")) as "max_${column.name}"`
-      )
-      .join(", ");
-    const largestStrings = columns
-      .map(
-        (column) => `
-      CASE WHEN "min_${column.name}" > "max_${column.name}" THEN "min_${column.name}" ELSE "max_${column.name}" END AS "${column.name}"
-    `
-      )
-      .join(",");
-    return (
-      await this.databaseClient.execute(`
-      WITH strings AS (SELECT ${minAndMax} from "${table}")
-      SELECT ${largestStrings} from strings;
-    `)
-    )[0];
-  }
-
   public async getProfileColumns(
     metadata: DatabaseMetadata,
     tableName: string
@@ -84,15 +70,15 @@ export class DatabaseTableActions extends DatabaseActions {
       tableName,
       tableDef
     )) as { [key: string]: number };
-    tableDef = tableDef.map((column: ProfileColumn) => {
+    tableDef = tableDef.map((column: ProfileColumn, index) => {
       // get string rep length value to estimate preview table column sizes
-      column.largestStringLength = characterLengths[column.name];
+      column.largestStringLength = characterLengths[`col_${index}`];
       return column;
     });
     try {
       await this.databaseClient.execute(`DROP TABLE tbl_${guid};`);
     } catch (err) {
-      console.error(err);
+      // no-op
     }
     return tableDef;
   }
@@ -119,5 +105,50 @@ export class DatabaseTableActions extends DatabaseActions {
     tableName: string
   ): Promise<void> {
     await this.databaseClient.execute(`DROP TABLE ${tableName}`);
+  }
+
+  private async getMinAndMaxStringLengthsOfAllColumns(
+    table: string,
+    columns: ProfileColumn[]
+  ) {
+    /** get columns */
+    const columnNames = columns
+      .map(
+        (column, index) =>
+          [escapeColumn(column.name), index] as [string, number]
+      )
+      .filter(([columnName]) => columnName !== "");
+    // template in the column mins and maxes.
+    // treat categoricals a little differently; all they have is length.
+    const minAndMax = columnNames
+      .map(([columnName]) => {
+        const columnAlias = escapeColumnAlias(columnName);
+        return (
+          `min(length(${columnName})) as "min_${columnAlias}",` +
+          `max(length(${columnName})) as "max_${columnAlias}"`
+        );
+      })
+      .join(", ");
+    const largestStrings = columnNames
+      .map(([columnName, index]) => {
+        const columnAlias = escapeColumnAlias(columnName);
+        return (
+          `CASE WHEN "min_${columnAlias}" > "max_${columnAlias}" THEN "min_${columnAlias}" ` +
+          `ELSE "max_${columnAlias}" END AS col_${index}`
+        );
+      })
+      .join(",");
+    try {
+      return (
+        await this.databaseClient.execute(
+          `
+      WITH strings AS (SELECT ${minAndMax} from "${table}")
+      SELECT ${largestStrings} from strings;
+    `
+        )
+      )[0];
+    } catch (err) {
+      return {};
+    }
   }
 }

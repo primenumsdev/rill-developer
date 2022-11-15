@@ -88,7 +88,7 @@ import java.util.List;
 
 /**
  * Run `mvn package` to generate the protobuf builder classes in target/generated-sources/annotations folder.
- * It uses following script - protoc-java.sh
+ * It uses following script - proto-gen.sh
  */
 public class SqlNodeProtoBuilder
 {
@@ -104,8 +104,13 @@ public class SqlNodeProtoBuilder
 
   public byte[] getProto()
   {
-    SqlNodeProto sqlNodeProto = handleSqlNode(sqlNode);
+    SqlNodeProto sqlNodeProto = getSqlNodeProto();
     return sqlNodeProto.toByteArray();
+  }
+
+  public SqlNodeProto getSqlNodeProto()
+  {
+    return handleSqlNode(sqlNode);
   }
 
   private SqlSelectProto handleSqlSelect(SqlSelect sqlSelect)
@@ -304,7 +309,7 @@ public class SqlNodeProtoBuilder
       basicSqlTypeProtoBuilder.setCollation(handleSqlCollation(basicSqlType.getCollation()));
     }
     basicSqlTypeProtoBuilder.setIsNullable(basicSqlType.isNullable());
-    if (basicSqlType.getFieldList() != null && basicSqlType.getFieldList().size() > 0) {
+    if (basicSqlType.isStruct() && basicSqlType.getFieldList() != null && basicSqlType.getFieldList().size() > 0) {
       for (RelDataTypeField relDataTypeField : basicSqlType.getFieldList()) {
         basicSqlTypeProtoBuilder.addFieldList(handleRelDataTypeFieldProto(relDataTypeField));
       }

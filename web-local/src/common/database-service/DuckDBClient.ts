@@ -1,11 +1,11 @@
-import type { RootConfig } from "../config/RootConfig";
-import { getBinaryRuntimePath } from "./getBinaryRuntimePath";
-import { isPortOpen } from "../utils/isPortOpen";
-import { asyncWaitUntil } from "../utils/waitUtils";
 import fetch from "isomorphic-unfetch";
 import type { ChildProcess } from "node:child_process";
 import childProcess from "node:child_process";
 import { URL } from "url";
+import type { RootConfig } from "../config/RootConfig";
+import { isPortOpen } from "../utils/isPortOpen";
+import { asyncWaitUntil } from "../utils/waitUtils";
+import { getBinaryRuntimePath } from "./getBinaryRuntimePath";
 
 /**
  * Spawns or connects to a runtime and uses it to proxy DuckDB queries.
@@ -15,16 +15,16 @@ import { URL } from "url";
  * But in the future we can easily add an interface to this and have different implementations.
  */
 export class DuckDBClient {
-  protected runtimeProcess: ChildProcess;
-  protected instanceID: string;
-
-  protected onCallback: () => void;
-  protected offCallback: () => void;
-
   // this is a singleton class because
   // duckdb doesn't work well with multiple connections to same db from same process
   // if we ever need to have different connections modify this to have a map of database to instance
   private static instance: DuckDBClient;
+  protected runtimeProcess: ChildProcess;
+  protected instanceID: string;
+  protected onCallback: () => void;
+
+  protected offCallback: () => void;
+
   private constructor(private readonly config: RootConfig) {}
   public static getInstance(config: RootConfig) {
     if (!this.instance) this.instance = new DuckDBClient(config);
@@ -60,6 +60,7 @@ export class DuckDBClient {
           dry_run: dry_run,
         }
       );
+      if (log) console.log(resp.data);
       return resp.data;
     } catch (err) {
       if (log) console.error(err);
@@ -69,6 +70,14 @@ export class DuckDBClient {
 
   public async prepare(query: string): Promise<void> {
     await this.execute(query, false, true);
+  }
+
+  public async requestToInstance(path: string, data: any): Promise<any> {
+    return this.request(`/v1/instances/${this.instanceID}/${path}`, data);
+  }
+
+  public getInstanceId(): string {
+    return this.instanceID;
   }
 
   protected async spawnRuntime() {
@@ -128,6 +137,8 @@ export class DuckDBClient {
     const res = await this.request("/v1/instances", {
       driver: "duckdb",
       dsn: databaseName,
+      exposed: true,
+      embed_catalog: true,
     });
 
     this.instanceID = res["instanceId"];
@@ -135,8 +146,10 @@ export class DuckDBClient {
     await this.execute(`
       INSTALL 'json';
       INSTALL 'parquet';
+      INSTALL 'httpfs';
       LOAD 'json';
       LOAD 'parquet';
+      LOAD 'httpfs';
     `);
 
     await this.execute(
