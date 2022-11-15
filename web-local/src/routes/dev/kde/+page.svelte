@@ -1,53 +1,39 @@
 <script lang="ts">
-  import type { DerivedTableStore } from "$lib/application-state-stores/table-stores";
   import DataTypeIcon from "$lib/components/data-types/DataTypeIcon.svelte";
-  import { INTEGERS, NUMERICS } from "$lib/duckdb-data-types";
-  import { getContext } from "svelte";
+  import "../../../app.css";
+  import "../../../fonts.css";
+  import { globToArray } from "../utils";
   import KernelDensityPlot from "./KernelDensityPlot.svelte";
-
-  // get all numeric plots
-
-  const derivedModelStore = getContext(
-    "rill:app:derived-model-store"
-  ) as DerivedTableStore;
-
-  $: relevantTables = $derivedModelStore?.entities?.map((entity) => {
-    return {
-      profiles: entity.profile.filter((column) => NUMERICS.has(column.type)),
-      total: entity.cardinality,
-    };
-  });
-  $: console.log(relevantTables);
+  const modules = import.meta.glob("./data/*.json");
+  const tablesReq = globToArray(modules);
 </script>
 
-{#if $derivedModelStore?.entities?.length}
-  <div class="grid gap-4 w-max" style:grid-template-columns="repeat(4, 400px)">
-    {#each relevantTables as { profiles, total }}
-      {#each profiles as profile, i}
-        {@const xMin = profile.summary.histogram[0].low}
-        {@const xMax = profile.summary.histogram.slice(-1)[0].high}
-        <!-- generate typed array from rug plot -->
-        {#if profile.summary.outliers}
+<div class="bg-white min-h-screen min-w-screen p-8">
+  {#await tablesReq then tables}
+    <div class="flex flex-row flex-wrap gap-8">
+      {#each tables as { data }}
+        {#each data as { profile, name, type }, i}
+          {@const xMin = profile.histogram[0].low}
+          {@const xMax = profile.histogram.slice(-1)[0].high}
+          <!-- generate typed array from rug plot -->
           <div>
             <h1 class="flex items-center gap-x-2">
-              <DataTypeIcon type={profile.type} />
-              {profile.name}
+              <DataTypeIcon {type} />
+              {name}
             </h1>
             <KernelDensityPlot
-              data={INTEGERS.has(profile.type)
-                ? profile.summary.histogram
-                : profile.summary.outliers}
-              type={profile.type}
-              statistics={profile.summary.statistics}
-              topK={profile.summary.topK}
-              totalRows={total}
-              cardinality={profile.summary.cardinality}
+              data={profile.histogram}
+              {type}
+              statistics={profile.statistics}
+              topK={profile.topK}
+              totalRows={profile.totalRows}
+              cardinality={profile.cardinality}
               {xMin}
               {xMax}
             />
           </div>
-        {/if}
+        {/each}
       {/each}
-    {/each}
-  </div>
-{/if}
+    </div>
+  {/await}
+</div>

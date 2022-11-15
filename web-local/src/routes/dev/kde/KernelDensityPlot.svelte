@@ -62,7 +62,7 @@
   let showRug = true;
 </script>
 
-<div class="cursor-ew-resize">
+<div>
   <Controls
     {densityMode}
     {showRug}

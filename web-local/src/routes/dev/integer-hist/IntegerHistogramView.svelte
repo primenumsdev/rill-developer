@@ -12,6 +12,13 @@
 
 <GraphicContext let:xScale let:config>
   <!-- <Axis side="bottom" /> -->
+  <line
+    x1={config.plotLeft}
+    x2={config.plotRight}
+    y1={config.plotBottom}
+    y2={config.plotBottom}
+    class="stroke-gray-200"
+  />
   <HistogramPrimitive
     {data}
     xLowAccessor="low"
@@ -42,15 +49,15 @@
         text-anchor="end">{formatInteger(point.count)} rows</text
       >
 
-      {#if point.count !== 0}
-        <rect
-          x={xScale(point.low)}
-          y={config.plotTop}
-          width={Math.max(4, xScale(point.high) - xScale(point.low))}
-          height={config.plotBottom - config.plotTop}
-          opacity=".2"
-        />
-      {/if}
+      <!-- {#if point.count !== 0} -->
+      <rect
+        x={xScale(point.low)}
+        y={config.plotTop}
+        width={Math.max(4, xScale(point.high) - xScale(point.low))}
+        height={config.plotBottom - config.plotTop}
+        opacity=".1"
+      />
+      <!-- {/if} -->
     </WithBisector>
   {/if}
 </GraphicContext>
