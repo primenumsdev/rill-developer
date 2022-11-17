@@ -28,11 +28,11 @@
   }
 
   .ui-copy {
-    @apply text-gray-700 dark:text-white;
+    @apply text-gray-700 dark:text-white fill-gray-700 dark:fill-white;
   }
 
   .ui-copy-muted {
-    @apply text-gray-600 dark:text-gray-200;
+    @apply text-gray-600 dark:text-gray-200 fill-gray-600 dark:fill-gray-200;
   }
 
   .ui-copy-icon {
@@ -40,11 +40,11 @@
   }
 
   .ui-copy-icon-inactive {
-    @apply text-gray-500 dark:text-gray-500;
+    @apply text-gray-500 dark:text-gray-500 fill-gray-500 dark:fill-gray-500;
   }
 
   .ui-copy-inactive {
-    @apply text-gray-500 dark:text-gray-400;
+    @apply text-gray-500 dark:text-gray-400 fill-gray-500 dark:fill-gray-500;
   }
 
   .ui-copy-disabled {

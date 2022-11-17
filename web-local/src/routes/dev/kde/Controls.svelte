@@ -25,7 +25,7 @@
   <div>
     {formatInteger(cardinality)} unique values
   </div>
-  <div class="flex flex-row gap-x-3 justify-end">
+  <div class="flex flex-row gap-x-2 justify-end">
     <div class="flex flex-row">
       <Tooltip location="top" distance={4}>
         <IconButton

@@ -3,6 +3,7 @@
     GraphicContext,
     SimpleDataGraphic,
   } from "$lib/components/data-graphic/elements";
+  import { format } from "d3-format";
   import DynamicallyPlacedLabel from "./DynamicallyPlacedLabel.svelte";
   export let min;
   export let max;
@@ -18,7 +19,7 @@
     { label: "q25", value: q25 },
     { label: "q50", value: q50 },
     { label: "q75", value: q75 },
-    { label: "mean", value: mean },
+    { label: "mean", value: mean, format: format(".2f") },
   ].reverse();
 </script>
 
@@ -30,7 +31,7 @@
     height={values?.length * rowHeight}
     let:xScale
   >
-    {#each values as { label, value }, i}
+    {#each values as { label, value, format = undefined }, i}
       <g transform="translate(0 {(values.length - i - 1) * rowHeight})">
         <GraphicContext height={rowHeight}>
           <circle cx={xScale(value)} cy={rowHeight / 2} r="4" fill="red" />
@@ -46,11 +47,11 @@
             x={value}
             ry={rowHeight / 2}
             buffer={8}
-            colorClass="fill-gray-5s00"
+            colorClass="ui-copy-muted"
           >
             <tspan>
               <tspan class="font-semibold">{label}</tspan>
-              <tspan class="italic">{value}</tspan>
+              <tspan class="italic">{format ? format(value) : value}</tspan>
             </tspan>
           </DynamicallyPlacedLabel>
         </GraphicContext>

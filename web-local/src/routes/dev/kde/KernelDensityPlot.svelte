@@ -16,6 +16,7 @@
   export let xMin: number;
   export let xMax: number;
   export let data: ArrayLike<any>;
+  export let rug: ArrayLike<any>;
   export let width = 400;
   export let height = 150;
 
@@ -123,7 +124,7 @@
             xAccessor="low"
             densityAccessor="count"
             size={8}
-            {data}
+            data={rug || data}
           />
         </g>
       {/if}
@@ -156,7 +157,7 @@
 
       {#if densityMode === "cdf"}
         <CumulativeDensityView
-          {data}
+          data={rug}
           {xMin}
           {xMax}
           {mouseoverValue}

@@ -23,6 +23,7 @@
             </h1>
             <KernelDensityPlot
               data={profile.histogram}
+              rug={profile.rug}
               {type}
               statistics={profile.statistics}
               topK={profile.topK}
