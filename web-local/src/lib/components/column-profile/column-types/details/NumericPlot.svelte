@@ -91,7 +91,7 @@
             xLowAccessor="low"
             xHighAccessor="high"
             yAccessor="count"
-            separator={0}
+            separator={data.length < 40 ? 1 : 0}
           />
 
           <!-- support topK mouseover effect on graphs -->
