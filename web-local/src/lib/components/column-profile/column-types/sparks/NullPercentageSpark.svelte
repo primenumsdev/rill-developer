@@ -19,8 +19,14 @@
       color={DATA_TYPE_COLORS[type]?.bgClass}
       value={percentage || 0}
     >
-      <span class:text-gray-300={nullCount === 0}
-        >∅ {singleDigitPercentage(percentage)}</span
+      <span
+        style:font-size="12px"
+        style:font-feature-settings={'"tnum", "zero", "ss01"'}
+        class:text-gray-300={nullCount === 0}
+        class="ui-copy-muted"
+      >
+        <!-- <span class="ui-copy-inactive-faint">∅</span> -->
+        {singleDigitPercentage(percentage)}</span
       >
     </BarAndLabel>
     <TooltipContent slot="tooltip-content">

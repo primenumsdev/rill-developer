@@ -1,17 +1,34 @@
 <script>
+  import { runtimeServiceGetConfig } from "@rilldata/web-common/runtime-client/manual-clients";
+  import { runtimeStore } from "@rilldata/web-local/lib/application-state-stores/application-store";
+  import { QueryClientProvider } from "@sveltestack/svelte-query";
+  import { onMount } from "svelte";
+  import { createQueryClient } from "../../../../lib/svelte-query/globalQueryClient";
   import Header from "./Header.svelte";
   import Nav from "./Nav.svelte";
   import Workspace from "./Workspace.svelte";
+
   let input;
   let output;
   let inspector;
+  const queryClient = createQueryClient();
+
+  onMount(async () => {
+    const localConfig = await runtimeServiceGetConfig();
+
+    runtimeStore.set({
+      instanceId: localConfig.instance_id,
+    });
+  });
 </script>
 
-<div class="application surface">
-  <Nav />
-  <Header bind:input bind:output bind:inspector />
-  <Workspace {input} {output} {inspector} />
-</div>
+<QueryClientProvider {queryClient}>
+  <div class="application surface">
+    <Nav />
+    <Header bind:input bind:output bind:inspector />
+    <Workspace {input} {output} {inspector} />
+  </div>
+</QueryClientProvider>
 
 <style lang="postcss">
   .application {

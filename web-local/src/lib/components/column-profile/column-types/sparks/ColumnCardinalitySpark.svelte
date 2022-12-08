@@ -12,7 +12,9 @@
   export let totalRows: number;
   export let compact = false;
 
-  $: cardinalityFormatter = !compact ? formatInteger : formatCompactInteger;
+  // for the purposes of this example branch
+  // set the cardinality formatter to something that works with sf311.parquet
+  $: cardinalityFormatter = formatCompactInteger;
 </script>
 
 {#if cardinality && totalRows}
@@ -23,8 +25,11 @@
         ? cardinality / totalRows
         : 0}
     >
-      <span>
-        |{cardinalityFormatter(cardinality)}|
+      <span
+        style:font-size="12px"
+        style:font-feature-settings={'"tnum", "zero", "ss01"'}
+      >
+        {cardinalityFormatter(cardinality)}
       </span>
     </BarAndLabel>
     <TooltipContent slot="tooltip-content">

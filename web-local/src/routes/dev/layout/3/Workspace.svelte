@@ -1,16 +1,13 @@
 <script>
-  import { getContext, setContext } from "svelte";
-  import { writable } from "svelte/store";
+  import { runtimeStore } from "@rilldata/web-local/lib/application-state-stores/application-store";
+  import { useSourceNames } from "@rilldata/web-local/lib/svelte-query/sources";
+  import ColumnProfile from "../../../../lib/components/column-profile/ColumnProfile.svelte";
   export let input = true;
   export let output = true;
   export let inspector = true;
   export let mode = "surface";
 
-  const pts = writable({ entities: [{ id: 1 }] });
-  const dts = writable({ entities: [{ id: 1 }] });
-  setContext("rill:app:persistent-table-store", pts);
-  setContext("rill:app:derived-table-store", dts);
-  const m = getContext("rill:app:derived-model-store");
+  $: sourceNames = useSourceNames($runtimeStore.instanceId);
 </script>
 
 <main style:grid-area="body" class="surface">
@@ -38,9 +35,11 @@
     <div
       class:set-border={mode === "surface"}
       class:surface={mode === "surface"}
-      class=" inspector placeholder"
+      class=" inspector pt-3"
     >
-      inspector
+      <ColumnProfile objectName={"sf311"} indentLevel={0} />
+
+      <!-- <SourceInspector sourceName={"sf311"} /> -->
       <!-- {#if m && $m?.entities && $m?.entities?.[0]}
         <ModelInspector model={$m?.entities[0]} />
       {/if} -->
@@ -77,7 +76,7 @@
   }
 
   .inspector {
-    width: 400px;
+    width: 380px;
     overflow: auto;
   }
 </style>

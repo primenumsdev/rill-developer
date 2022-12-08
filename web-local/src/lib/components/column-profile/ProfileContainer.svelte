@@ -44,6 +44,7 @@
         focus:ring-gray-500
         focus:outline-gray-300 flex-1
         justify-between w-full"
+    style:font-size="12px"
     class:bg-gray-50={active}
     use:shiftClickAction
     on:shift-click
