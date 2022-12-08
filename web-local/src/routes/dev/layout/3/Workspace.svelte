@@ -5,7 +5,6 @@
     GridCell,
     LeftRightGrid,
   } from "@rilldata/web-local/lib/components/left-right-grid";
-  import BarAndLabel from "@rilldata/web-local/lib/components/viz/BarAndLabel.svelte";
   import { useSourceNames } from "@rilldata/web-local/lib/svelte-query/sources";
   import ColumnProfile from "../../../../lib/components/column-profile/ColumnProfile.svelte";
   export let input = true;
@@ -46,47 +45,76 @@
       <div class="px-4 py-4">
         <LeftRightGrid>
           <GridCell
+            ><span class="dark:text-trendy-pink-300"
+              ><span class="font-bold dark:text-trendy-pink-200">72%</span> of source
+              rows</span
+            ></GridCell
+          >
+          <GridCell side="right"
             ><span class="font-bold dark:text-trendy-pink-200"
               >532,502 <span class="font-normal dark:text-trendy-pink-300"
                 >rows</span
               ></span
             ></GridCell
           >
-          <GridCell side="right"
-            ><span class="dark:text-trendy-pink-300"
-              ><span class="font-bold dark:text-trendy-pink-200">72%</span> of source
-              rows</span
-            ></GridCell
-          >
 
           <GridCell
+            ><span class="dark:text-trendy-pink-300"
+              >dropped <span class="font-bold dark:text-trendy-pink-200">3</span
+              > columns</span
+            ></GridCell
+          >
+          <GridCell side="right"
             ><span class="font-bold  dark:text-trendy-pink-200"
               >22 <span class="font-normal dark:text-trendy-pink-300"
                 >columns</span
               ></span
             ></GridCell
           >
-          <GridCell side="right"
-            ><span class="dark:text-trendy-pink-300"
-              >dropped <span class="font-bold dark:text-trendy-pink-200">3</span
-              > columns</span
-            ></GridCell
-          >
         </LeftRightGrid>
       </div>
 
       <div class="px-4 pb-4">
-        <h2>FROM</h2>
+        <h2 class="dark:text-trendy-pink-200 flex justify-between items-center">
+          SOURCES
+        </h2>
         <LeftRightGrid>
-          <GridCell>Sf311</GridCell>
+          <GridCell
+            ><span class="dark:text-trendy-pink-300">events</span></GridCell
+          >
+          <GridCell side="right"
+            ><span class="dark:text-trendy-pink-300">422,423 rows</span
+            ></GridCell
+          >
+          <GridCell
+            ><span class="dark:text-trendy-pink-300">product_catalog</span
+            ></GridCell
+          >
+          <GridCell side="right"
+            ><span class="dark:text-trendy-pink-300">523,104 rows</span
+            ></GridCell
+          >
+        </LeftRightGrid>
+      </div>
+      <!-- 
+      <div class="px-4 pb-4">
+        <h2 class="dark:text-trendy-pink-200">FROM</h2>
+        <LeftRightGrid>
+          <GridCell>events</GridCell>
           <GridCell side="right">422,423 rows</GridCell>
-          <GridCell>something else</GridCell>
+        </LeftRightGrid>
+      </div>
+
+      <div class="px-4 pb-4">
+        <h2 class="dark:text-trendy-pink-200">JOIN</h2>
+        <LeftRightGrid>
+          <GridCell>product_catalog</GridCell>
           <GridCell side="right">523,104 rows</GridCell>
         </LeftRightGrid>
       </div>
 
       <div class="px-4 pb-4">
-        <h2>WHERE</h2>
+        <h2 class="dark:text-trendy-pink-200">WHERE</h2>
         <LeftRightGrid>
           <GridCell>status IS NOT NULL</GridCell>
           <GridCell side="right">
@@ -101,8 +129,9 @@
             </div>
           </GridCell>
         </LeftRightGrid>
-      </div>
-      <h2 class="px-4 pb-2">SELECT</h2>
+      </div> -->
+
+      <h2 class="px-4 pb-2 dark:text-trendy-pink-200">SELECT</h2>
 
       <ColumnProfile objectName={"sf311"} indentLevel={0} />
 
