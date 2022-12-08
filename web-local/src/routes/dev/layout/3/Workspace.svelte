@@ -5,6 +5,7 @@
     GridCell,
     LeftRightGrid,
   } from "@rilldata/web-local/lib/components/left-right-grid";
+  import BarAndLabel from "@rilldata/web-local/lib/components/viz/BarAndLabel.svelte";
   import { useSourceNames } from "@rilldata/web-local/lib/svelte-query/sources";
   import ColumnProfile from "../../../../lib/components/column-profile/ColumnProfile.svelte";
   export let input = true;
@@ -73,6 +74,36 @@
           >
         </LeftRightGrid>
       </div>
+
+      <div class="px-4 pb-4">
+        <h2>FROM</h2>
+        <LeftRightGrid>
+          <GridCell>Sf311</GridCell>
+          <GridCell side="right">422,423 rows</GridCell>
+          <GridCell>something else</GridCell>
+          <GridCell side="right">523,104 rows</GridCell>
+        </LeftRightGrid>
+      </div>
+
+      <div class="px-4 pb-4">
+        <h2>WHERE</h2>
+        <LeftRightGrid>
+          <GridCell>status IS NOT NULL</GridCell>
+          <GridCell side="right">
+            <div style:width="102px">
+              <BarAndLabel color="bg-sky-900" value={0.64}>64%</BarAndLabel>
+            </div>
+          </GridCell>
+          <GridCell>latitude > 36</GridCell>
+          <GridCell side="right">
+            <div>
+              <BarAndLabel color="bg-sky-900" value={0.42}>42%</BarAndLabel>
+            </div>
+          </GridCell>
+        </LeftRightGrid>
+      </div>
+      <h2 class="px-4 pb-2">SELECT</h2>
+
       <ColumnProfile objectName={"sf311"} indentLevel={0} />
 
       <!-- <SourceInspector sourceName={"sf311"} /> -->
