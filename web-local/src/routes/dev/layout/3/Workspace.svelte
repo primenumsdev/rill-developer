@@ -1,5 +1,10 @@
 <script>
   import { runtimeStore } from "@rilldata/web-local/lib/application-state-stores/application-store";
+  // import LeftRightGrid from "@rilldata/web-local/lib/components/left-right-grid/LeftRightGrid.svelte";
+  import {
+    GridCell,
+    LeftRightGrid,
+  } from "@rilldata/web-local/lib/components/left-right-grid";
   import { useSourceNames } from "@rilldata/web-local/lib/svelte-query/sources";
   import ColumnProfile from "../../../../lib/components/column-profile/ColumnProfile.svelte";
   export let input = true;
@@ -35,8 +40,39 @@
     <div
       class:set-border={mode === "surface"}
       class:surface={mode === "surface"}
-      class=" inspector pt-3"
+      class=" inspector"
     >
+      <div class="px-4 py-4">
+        <LeftRightGrid>
+          <GridCell
+            ><span class="font-bold dark:text-trendy-pink-200"
+              >532,502 <span class="font-normal dark:text-trendy-pink-300"
+                >rows</span
+              ></span
+            ></GridCell
+          >
+          <GridCell side="right"
+            ><span class="dark:text-trendy-pink-300"
+              ><span class="font-bold dark:text-trendy-pink-200">72%</span> of source
+              rows</span
+            ></GridCell
+          >
+
+          <GridCell
+            ><span class="font-bold  dark:text-trendy-pink-200"
+              >22 <span class="font-normal dark:text-trendy-pink-300"
+                >columns</span
+              ></span
+            ></GridCell
+          >
+          <GridCell side="right"
+            ><span class="dark:text-trendy-pink-300"
+              >dropped <span class="font-bold dark:text-trendy-pink-200">3</span
+              > columns</span
+            ></GridCell
+          >
+        </LeftRightGrid>
+      </div>
       <ColumnProfile objectName={"sf311"} indentLevel={0} />
 
       <!-- <SourceInspector sourceName={"sf311"} /> -->
@@ -76,7 +112,7 @@
   }
 
   .inspector {
-    width: 420px;
+    width: 350px;
     overflow: auto;
   }
 </style>

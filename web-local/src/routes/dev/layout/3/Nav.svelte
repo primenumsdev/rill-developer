@@ -1,9 +1,6 @@
 <script lang="ts">
   import IconButton from "@rilldata/web-local/lib/components/button/IconButton.svelte";
-  import {
-    default as Add,
-    default as Plus,
-  } from "@rilldata/web-local/lib/components/icons/Add.svelte";
+  import { default as Plus } from "@rilldata/web-local/lib/components/icons/Add.svelte";
   import CaretDownIcon from "@rilldata/web-local/lib/components/icons/CaretDownIcon.svelte";
   import Discord from "@rilldata/web-local/lib/components/icons/Discord.svelte";
   import Docs from "@rilldata/web-local/lib/components/icons/Docs.svelte";
@@ -13,7 +10,6 @@
   import Metrics from "@rilldata/web-local/lib/components/icons/Metrics.svelte";
   import { default as Model } from "@rilldata/web-local/lib/components/icons/Model.svelte";
   import Search from "@rilldata/web-local/lib/components/icons/Search.svelte";
-  import Source from "@rilldata/web-local/lib/components/icons/Source.svelte";
   import Tooltip from "@rilldata/web-local/lib/components/tooltip/Tooltip.svelte";
   import TooltipContent from "@rilldata/web-local/lib/components/tooltip/TooltipContent.svelte";
   import TooltipTitle from "@rilldata/web-local/lib/components/tooltip/TooltipTitle.svelte";
@@ -135,7 +131,7 @@
             {name}
           </div>
           {#if open}
-            <div
+            <!-- <div
               class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
             >
               <span class="flex items-center gap-x-2">
@@ -144,6 +140,11 @@
                   <Add />
                   <span class="italic">Add your first source</span>{/if}
               </span>
+            </div> -->
+            <div
+              class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
+            >
+              <Model size="14px" /> Model
             </div>
             {#if sources?.length}
               <section
@@ -157,11 +158,6 @@
                 {/each}
               </section>
             {/if}
-            <div
-              class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
-            >
-              <Model size="14px" /> Model
-            </div>
             <div
               class="{itemHover} pl-5 flex items-center gap-x-2 dark:text-trendy-pink-300"
             >

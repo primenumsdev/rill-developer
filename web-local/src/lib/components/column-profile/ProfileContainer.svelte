@@ -42,7 +42,7 @@
         hover:bg-gray-100 dark:hover:bg-trendy-pink-700
         focus:bg-gray-100
         focus:ring-gray-500
-        ui-copy-muted dark:trendy-pink-100
+        ui-copy-muted dark:text-trendy-pink-100
         focus:outline-gray-300 flex-1
         justify-between w-full"
     style:font-size="12px"
