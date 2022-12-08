@@ -23,7 +23,7 @@
 </script>
 
 <QueryClientProvider {queryClient}>
-  <div class="application surface">
+  <div class="application surface dark">
     <Nav />
     <Header bind:input bind:output bind:inspector />
     <Workspace {input} {output} {inspector} />

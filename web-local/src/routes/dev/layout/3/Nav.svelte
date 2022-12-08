@@ -1,15 +1,17 @@
 <script lang="ts">
   import IconButton from "@rilldata/web-local/lib/components/button/IconButton.svelte";
-  import Add from "@rilldata/web-local/lib/components/icons/Add.svelte";
+  import {
+    default as Add,
+    default as Plus,
+  } from "@rilldata/web-local/lib/components/icons/Add.svelte";
   import CaretDownIcon from "@rilldata/web-local/lib/components/icons/CaretDownIcon.svelte";
   import Discord from "@rilldata/web-local/lib/components/icons/Discord.svelte";
   import Docs from "@rilldata/web-local/lib/components/icons/Docs.svelte";
-  import Explore from "@rilldata/web-local/lib/components/icons/Explore.svelte";
   import Github from "@rilldata/web-local/lib/components/icons/Github.svelte";
   import HideLeftSidebar from "@rilldata/web-local/lib/components/icons/HideLeftSidebar.svelte";
   import InfoCircle from "@rilldata/web-local/lib/components/icons/InfoCircle.svelte";
   import Metrics from "@rilldata/web-local/lib/components/icons/Metrics.svelte";
-  import Model from "@rilldata/web-local/lib/components/icons/Model.svelte";
+  import { default as Model } from "@rilldata/web-local/lib/components/icons/Model.svelte";
   import Search from "@rilldata/web-local/lib/components/icons/Search.svelte";
   import Source from "@rilldata/web-local/lib/components/icons/Source.svelte";
   import Tooltip from "@rilldata/web-local/lib/components/tooltip/Tooltip.svelte";
@@ -100,7 +102,8 @@
       <button
         style:font-size=".75rem"
         class="flex items-center gap-x-2 bg-gray-100 dark:bg-trendy-pink-700 dark:text-trendy-pink-100 border border-gray-300 dark:border-trendy-pink-600 px-2 py-1 rounded w-full justify-center hover:border-gray-400 hover:bg-gray-200 transition-colors"
-        ><Explore /> New Dashboard
+      >
+        <Plus /> New Model
       </button>
     </section>
 

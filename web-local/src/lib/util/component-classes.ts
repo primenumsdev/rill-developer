@@ -1,6 +1,6 @@
 /** classes for the native select element */
 export const NATIVE_SELECT =
-  "italic hover:bg-gray-100 rounded border border-6 border-transparent hover:font-bold hover:border-gray-100";
+  "italic  rounded border border-6 border-transparent  dark:bg-trendy-pink-800";
 
 /** classes for elements that trigger the highlight in a model query */
 export const QUERY_REFERENCE_TRIGGER =

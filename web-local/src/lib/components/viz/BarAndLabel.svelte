@@ -34,7 +34,7 @@
     {customBackgroundColor
     ? customBackgroundColor
     : showBackground
-    ? 'bg-gray-100 dark:bg-gray-700'
+    ? 'bg-gray-100 dark:bg-trendy-pink-800'
     : 'bg-transparent'}
     "
   style:flex="1"

@@ -76,7 +76,7 @@
   }
 
   .inspector {
-    width: 380px;
+    width: 420px;
     overflow: auto;
   }
 </style>
