@@ -1,3 +1,4 @@
+import { getName } from "@rilldata/web-local/common/utils/incrementName";
 import {
   extractTableName,
   sanitizeEntityName,
@@ -70,10 +71,11 @@ export class ModelActions extends DataModelerActions {
     { stateService }: PersistentModelStateActionArg,
     params: NewModelParams
   ) {
-    const persistentModel = getNewModel(
-      params,
-      stateService.getCurrentState().modelNumber + 1
+    params.name ??= getName(
+      "model_0",
+      stateService.getCurrentState().entities.map((model) => model.tableName)
     );
+    const persistentModel = getNewModel(params);
     const duplicateResp = this.checkDuplicateModel(
       stateService,
       persistentModel.name,
@@ -83,7 +85,6 @@ export class ModelActions extends DataModelerActions {
       return duplicateResp;
     }
 
-    this.dataModelerStateService.dispatch("incrementModelNumber", []);
     this.dataModelerStateService.dispatch("addEntity", [
       EntityType.Model,
       StateType.Persistent,
@@ -200,22 +201,6 @@ export class ModelActions extends DataModelerActions {
       EntityType.Model,
       modelId,
     ]);
-
-    try {
-      // create a view of the query for other analysis
-      // re-sanitize query but do not remove casing, in case there is case-sensitive syntax
-      // in the query e.g. strftime(dt, '%I:%M:%S')
-      await this.databaseActionQueue.enqueue(
-        { id: modelId, priority: DatabaseActionQueuePriority.ActiveModel },
-        "createViewOfQuery",
-        [persistentModel.tableName, sanitizeQuery(persistentModel.query, false)]
-      );
-    } catch (error) {
-      return this.setModelError(
-        modelId,
-        ActionResponseFactory.getModelQueryError(error.message)
-      );
-    }
 
     await this.setModelStatus(modelId, EntityStatus.Profiling);
 
@@ -444,6 +429,16 @@ export class ModelActions extends DataModelerActions {
     const currentName = model.tableName;
     const sanitizedModelName = cleanModelName(name);
 
+    if (currentName.toLowerCase() !== sanitizedModelName.toLowerCase()) {
+      await this.databaseActionQueue.enqueue(
+        {
+          id: modelId,
+          priority: DatabaseActionQueuePriority.ActiveModelProfile,
+        },
+        "renameView",
+        [currentName, sanitizedModelName]
+      );
+    }
     this.dataModelerStateService.dispatch("updateModelName", [
       modelId,
       sanitizedModelName,

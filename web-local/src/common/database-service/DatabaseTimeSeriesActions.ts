@@ -1,3 +1,4 @@
+import { escapeColumn } from "@rilldata/web-local/common/database-service/columnUtils";
 import type { MetricsViewRequestFilter } from "@rilldata/web-local/common/rill-developer-service/MetricsViewActions";
 import type { BasicMeasureDefinition } from "../data-modeler-state-service/entity-state-service/MeasureDefinitionStateService";
 import { DatabaseActions } from "./DatabaseActions";
@@ -59,14 +60,14 @@ export const lastXTimeRanges: TimeRangeName[] = [
 
 // The string values must adhere to DuckDB INTERVAL syntax, since, in some places, we interpolate an SQL queries with these values.
 export enum TimeGrain {
-  OneMinute = "1 minute",
+  OneMinute = "minute",
   // FiveMinutes = "5 minute",
   // FifteenMinutes = "15 minute",
-  OneHour = "1 hour",
-  OneDay = "1 day",
-  OneWeek = "7 day",
-  OneMonth = "1 month",
-  OneYear = "1 year",
+  OneHour = "hour",
+  OneDay = "day",
+  OneWeek = "week",
+  OneMonth = "month",
+  OneYear = "year",
 }
 export interface TimeSeriesTimeRange {
   name?: TimeRangeName;
@@ -139,6 +140,9 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
       : "";
     const filter = filterCondition ? ` WHERE ${filterCondition}` : "";
 
+    // avoid having clashes with timestampColumn and the alias we use for generated series for timestamp
+    const tsAlias = timestampColumn === "ts" ? "_ts" : "ts";
+
     /**
      * Generate the rolled up time series as a temporary table and
      * then compute the result set + any M4-like reduction on it.
@@ -156,7 +160,7 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
         -- generate a time series column that has the intended range
         WITH template as (
           SELECT 
-            generate_series as ts 
+            generate_series as ${tsAlias} 
           FROM 
             generate_series(
               date_trunc(
@@ -172,19 +176,21 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
         -- transform the original data, and optionally sample it.
         series AS (
           SELECT 
-            date_trunc('${timeGranularity}', "${timestampColumn}") as ts,
+            date_trunc('${timeGranularity}', ${escapeColumn(
+          timestampColumn
+        )}) as ${tsAlias},
             ${getExpressionColumnsFromMeasures(measures)}
           FROM "${tableName}" ${filter}
-          GROUP BY ts ORDER BY ts
+          GROUP BY ${tsAlias} ORDER BY ${tsAlias}
         )
         -- join the transformed data with the generated time series column,
         -- coalescing the first value to get the 0-default when the rolled up data
         -- does not have that value.
         SELECT 
           ${getCoalesceStatementsMeasures(measures)},
-          template.ts from template
-        LEFT OUTER JOIN series ON template.ts = series.ts
-        ORDER BY template.ts
+          template.${tsAlias} as ts from template
+        LEFT OUTER JOIN series ON template.${tsAlias} = series.${tsAlias}
+        ORDER BY template.${tsAlias}
       )`
       );
     } catch (err) {
@@ -254,12 +260,13 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
     valueColumn: string,
     pixels: number
   ) {
+    const escapedTimestampColumn = escapeColumn(timestampColumn);
     const [timeSeriesLength] = await this.databaseClient.execute(`
         SELECT count(*) as c FROM "${table}"
     `);
     if (timeSeriesLength.c < pixels * 4) {
       return this.databaseClient.execute(`
-          SELECT "${timestampColumn}" as ts, "${valueColumn}" as count FROM "${table}"
+          SELECT ${escapedTimestampColumn} as ts, "${valueColumn}" as count FROM "${table}"
       `);
     }
 
@@ -267,7 +274,7 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
       .execute<TimeseriesReductionQueryResponse>(`
       -- extract unix time
       WITH Q as (
-        SELECT extract('epoch' from "${timestampColumn}") as t, "${valueColumn}" as v FROM "${table}"
+        SELECT extract('epoch' from ${escapedTimestampColumn}) as t, "${valueColumn}" as v FROM "${table}"
       ),
       -- generate bounds
       M as (
@@ -358,15 +365,16 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
       };
     }
 
+    const escapedColumnName = escapeColumn(columnName);
     const [timeRange] = await this.databaseClient.execute<{
       r: number;
       max_value: number;
       min_value: number;
       count: number;
     }>(`SELECT 
-        max("${columnName}") - min("${columnName}") as r,
-        max("${columnName}") as max_value,
-        min("${columnName}") as min_value,
+        max(${escapedColumnName}) - min(${escapedColumnName}) as r,
+        max(${escapedColumnName}) as max_value,
+        min(${escapedColumnName}) as min_value,
         count(*) as count
         from 
       ${tableName}`);
@@ -446,11 +454,12 @@ export class DatabaseTimeSeriesActions extends DatabaseActions {
       rollupInterval = estimatedRollupInterval.rollupInterval;
     }
 
+    const escapedTimestampColumn = escapeColumn(timestampColumn);
     const [actualTimeRange] = await this.databaseClient.execute<{
       min: number;
       max: number;
     }>(`SELECT
-		    min("${timestampColumn}") as min, max("${timestampColumn}") as max 
+		    min(${escapedTimestampColumn}) as min, max(${escapedTimestampColumn}) as max 
 		    FROM ${tableName}`);
 
     let startTime = new Date(timeRange?.start || actualTimeRange.min);

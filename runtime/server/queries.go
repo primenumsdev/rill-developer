@@ -8,29 +8,22 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/marcboeker/go-duckdb"
+	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
+	"github.com/rilldata/rill/runtime/drivers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
-
-	"github.com/rilldata/rill/runtime/api"
-	"github.com/rilldata/rill/runtime/drivers"
 )
 
 // Query implements RuntimeService
-func (s *Server) Query(ctx context.Context, req *api.QueryRequest) (*api.QueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method not implemented")
-}
-
-// QueryDirect implements RuntimeService
-func (s *Server) QueryDirect(ctx context.Context, req *api.QueryDirectRequest) (*api.QueryDirectResponse, error) {
+func (s *Server) Query(ctx context.Context, req *runtimev1.QueryRequest) (*runtimev1.QueryResponse, error) {
 	args := make([]any, len(req.Args))
 	for i, arg := range req.Args {
 		args[i] = arg.AsInterface()
 	}
 
-	rows, err := s.query(ctx, req.InstanceId, &drivers.Statement{
+	res, err := s.query(ctx, req.InstanceId, &drivers.Statement{
 		Query:    req.Sql,
 		Args:     args,
 		DryRun:   req.DryRun,
@@ -44,69 +37,34 @@ func (s *Server) QueryDirect(ctx context.Context, req *api.QueryDirectRequest) (
 	if req.DryRun {
 		// TODO: Return a meta object for dry-run queries
 		// NOTE: Currently, instance.Query return nil rows for succesful dry-run queries
-		return &api.QueryDirectResponse{}, nil
+		return &runtimev1.QueryResponse{}, nil
 	}
 
-	defer rows.Close()
+	defer res.Close()
 
-	meta, err := rowsToMeta(rows)
+	data, err := rowsToData(res)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	data, err := rowsToData(rows)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	resp := &api.QueryDirectResponse{
-		Meta: meta,
+	resp := &runtimev1.QueryResponse{
+		Meta: res.Schema,
 		Data: data,
 	}
 
 	return resp, nil
 }
 
-func (s *Server) query(ctx context.Context, instanceID string, stmt *drivers.Statement) (*sqlx.Rows, error) {
-	registry, _ := s.metastore.RegistryStore()
-	inst, found := registry.FindInstance(ctx, instanceID)
-	if !found {
-		return nil, status.Error(codes.NotFound, "instance not found")
-	}
-
-	conn, err := s.cache.openAndMigrate(ctx, inst.ID, inst.Driver, inst.DSN)
-	if err != nil {
-		return nil, status.Error(codes.Unknown, err.Error())
-	}
-	olap, _ := conn.OLAPStore()
-
-	return olap.Execute(ctx, stmt)
-}
-
-func rowsToMeta(rows *sqlx.Rows) ([]*api.SchemaColumn, error) {
-	cts, err := rows.ColumnTypes()
+func (s *Server) query(ctx context.Context, instanceID string, stmt *drivers.Statement) (*drivers.Result, error) {
+	olap, err := s.runtime.OLAP(ctx, instanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	meta := make([]*api.SchemaColumn, len(cts))
-	for i, ct := range cts {
-		nullable, ok := ct.Nullable()
-		if !ok {
-			nullable = true
-		}
-
-		meta[i] = &api.SchemaColumn{
-			Name:     ct.Name(),
-			Type:     ct.DatabaseTypeName(),
-			Nullable: nullable,
-		}
-	}
-
-	return meta, nil
+	return olap.Execute(ctx, stmt)
 }
 
-func rowsToData(rows *sqlx.Rows) ([]*structpb.Struct, error) {
+func rowsToData(rows *drivers.Result) ([]*structpb.Struct, error) {
 	var data []*structpb.Struct
 	for rows.Next() {
 		rowMap := make(map[string]any)

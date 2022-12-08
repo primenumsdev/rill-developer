@@ -4,215 +4,199 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/rilldata/rill/runtime/api"
-	"github.com/rilldata/rill/runtime/connectors"
+	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
 	"github.com/rilldata/rill/runtime/drivers"
-	sql "github.com/rilldata/rill/runtime/sql/pure"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// ListCatalogObjects implements RuntimeService
-func (s *Server) ListCatalogObjects(ctx context.Context, req *api.ListCatalogObjectsRequest) (*api.ListCatalogObjectsResponse, error) {
-	registry, _ := s.metastore.RegistryStore()
-	inst, found := registry.FindInstance(ctx, req.InstanceId)
-	if !found {
-		return nil, status.Error(codes.InvalidArgument, "instance not found")
-	}
-
-	catalog, err := s.openCatalog(ctx, inst)
+// ListCatalogEntries implements RuntimeService
+func (s *Server) ListCatalogEntries(ctx context.Context, req *runtimev1.ListCatalogEntriesRequest) (*runtimev1.ListCatalogEntriesResponse, error) {
+	entries, err := s.runtime.ListCatalogEntries(ctx, req.InstanceId, pbToObjectType(req.Type))
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
-	objs := catalog.FindObjects(ctx, req.InstanceId)
-	pbs := make([]*api.CatalogObject, len(objs))
-	for i, obj := range objs {
+	pbs := make([]*runtimev1.CatalogEntry, len(entries))
+	for i, obj := range entries {
+		var err error
 		pbs[i], err = catalogObjectToPB(obj)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
 	}
 
-	return &api.ListCatalogObjectsResponse{Objects: pbs}, nil
+	return &runtimev1.ListCatalogEntriesResponse{Entries: pbs}, nil
 }
 
-// GetCatalogObject implements RuntimeService
-func (s *Server) GetCatalogObject(ctx context.Context, req *api.GetCatalogObjectRequest) (*api.GetCatalogObjectResponse, error) {
-	registry, _ := s.metastore.RegistryStore()
-	inst, found := registry.FindInstance(ctx, req.InstanceId)
-	if !found {
-		return nil, status.Error(codes.InvalidArgument, "instance not found")
-	}
-
-	catalog, err := s.openCatalog(ctx, inst)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	obj, found := catalog.FindObject(ctx, req.InstanceId, req.Name)
-	if !found {
-		return nil, status.Error(codes.InvalidArgument, "object not found")
-	}
-
-	pb, err := catalogObjectToPB(obj)
+// GetCatalogEntry implements RuntimeService
+func (s *Server) GetCatalogEntry(ctx context.Context, req *runtimev1.GetCatalogEntryRequest) (*runtimev1.GetCatalogEntryResponse, error) {
+	entry, err := s.runtime.GetCatalogEntry(ctx, req.InstanceId, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
-	return &api.GetCatalogObjectResponse{Object: pb}, nil
-}
-
-// TriggerRefresh implements RuntimeService
-func (s *Server) TriggerRefresh(ctx context.Context, req *api.TriggerRefreshRequest) (*api.TriggerRefreshResponse, error) {
-	registry, _ := s.metastore.RegistryStore()
-	inst, found := registry.FindInstance(ctx, req.InstanceId)
-	if !found {
-		return nil, status.Error(codes.InvalidArgument, "instance not found")
-	}
-
-	catalog, err := s.openCatalog(ctx, inst)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	// Find object
-	obj, found := catalog.FindObject(ctx, req.InstanceId, req.Name)
-	if !found {
-		return nil, status.Error(codes.InvalidArgument, "object not found")
-	}
-
-	// Parse SQL
-	source, err := sqlToSource(obj.SQL)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	// Get olap
-	conn, err := s.cache.openAndMigrate(ctx, inst.ID, inst.Driver, inst.DSN)
-	if err != nil {
-		return nil, status.Error(codes.Unknown, err.Error())
-	}
-	olap, _ := conn.OLAPStore()
-
-	// Ingest the source
-	err = olap.Ingest(ctx, source)
+	pb, err := catalogObjectToPB(entry)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
-	// Update object
-	obj.RefreshedOn = time.Now()
-	err = catalog.UpdateObject(ctx, req.InstanceId, obj)
-
-	return &api.TriggerRefreshResponse{}, nil
+	return &runtimev1.GetCatalogEntryResponse{Entry: pb}, nil
 }
 
-func (s *Server) openCatalog(ctx context.Context, inst *drivers.Instance) (drivers.CatalogStore, error) {
-	if !inst.EmbedCatalog {
-		catalog, ok := s.metastore.CatalogStore()
-		if !ok {
-			return nil, fmt.Errorf("metastore cannot serve as catalog")
-		}
-		return catalog, nil
-	}
-
-	conn, err := s.cache.openAndMigrate(ctx, inst.ID, inst.Driver, inst.DSN)
+// Reconcile implements RuntimeService
+func (s *Server) Reconcile(ctx context.Context, req *runtimev1.ReconcileRequest) (*runtimev1.ReconcileResponse, error) {
+	res, err := s.runtime.Reconcile(ctx, req.InstanceId, req.ChangedPaths, nil, req.Dry, req.Strict)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	catalog, ok := conn.CatalogStore()
-	if !ok {
-		return nil, fmt.Errorf("instance cannot embed catalog")
-	}
-
-	return catalog, nil
-}
-
-func catalogObjectToPB(obj *drivers.CatalogObject) (*api.CatalogObject, error) {
-	switch obj.Type {
-	case drivers.CatalogObjectTypeSource:
-		src, err := catalogObjectSourceToPB(obj)
-		if err != nil {
-			return nil, err
-		}
-		return &api.CatalogObject{
-			Type: &api.CatalogObject_Source{
-				Source: src,
-			},
-			RefreshedOn: timestamppb.New(obj.RefreshedOn),
-		}, nil
-	default:
-		panic(fmt.Errorf("not implemented"))
-	}
-}
-
-func catalogObjectSourceToPB(obj *drivers.CatalogObject) (*api.Source, error) {
-	source, err := sqlToSource(obj.SQL)
-	if err != nil {
-		return nil, err
-	}
-
-	propsPB, err := structpb.NewStruct(source.Properties)
-	if err != nil {
-		panic(err) // TODO: Should never happen, but maybe handle defensively?
-	}
-
-	return &api.Source{
-		Sql:        obj.SQL,
-		Name:       obj.Name,
-		Connector:  source.Connector,
-		Properties: propsPB,
+	return &runtimev1.ReconcileResponse{
+		Errors:        res.Errors,
+		AffectedPaths: res.AffectedPaths,
 	}, nil
 }
 
-func sqlToSource(sqlStr string) (*connectors.Source, error) {
-	astStmt, err := sql.Parse(sqlStr)
+// PutFileAndReconcile implements RuntimeService
+func (s *Server) PutFileAndReconcile(ctx context.Context, req *runtimev1.PutFileAndReconcileRequest) (*runtimev1.PutFileAndReconcileResponse, error) {
+	err := s.runtime.PutFile(ctx, req.InstanceId, req.Path, strings.NewReader(req.Blob), req.Create, req.CreateOnly)
 	if err != nil {
-		return nil, fmt.Errorf("parse error: %s", err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if astStmt.CreateSource == nil {
-		return nil, fmt.Errorf("refresh error: object cannot be refreshed")
-	}
-
-	ast := astStmt.CreateSource
-
-	s := &connectors.Source{
-		Name:       ast.Name,
-		Properties: make(map[string]any),
-	}
-
-	for _, prop := range ast.With.Properties {
-		if strings.ToLower(prop.Key) == "connector" {
-			s.Connector = safePtrToStr(prop.Value.String)
-			continue
-		}
-		if prop.Value.Number != nil {
-			s.Properties[prop.Key] = *prop.Value.Number
-		} else if prop.Value.String != nil {
-			s.Properties[prop.Key] = *prop.Value.String
-		} else if prop.Value.Boolean != nil {
-			s.Properties[prop.Key] = *prop.Value.Boolean
-		}
-	}
-
-	err = s.Validate()
+	changedPaths := []string{req.Path}
+	res, err := s.runtime.Reconcile(ctx, req.InstanceId, changedPaths, nil, req.Dry, req.Strict)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return s, nil
+	return &runtimev1.PutFileAndReconcileResponse{
+		Errors:        res.Errors,
+		AffectedPaths: res.AffectedPaths,
+	}, nil
 }
 
-func safePtrToStr(s *string) string {
-	if s == nil {
-		return ""
+// RenameFileAndReconcile implements RuntimeService
+func (s *Server) RenameFileAndReconcile(ctx context.Context, req *runtimev1.RenameFileAndReconcileRequest) (*runtimev1.RenameFileAndReconcileResponse, error) {
+	err := s.runtime.RenameFile(ctx, req.InstanceId, req.FromPath, req.ToPath)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return *s
+
+	changedPaths := []string{req.FromPath, req.ToPath}
+	res, err := s.runtime.Reconcile(ctx, req.InstanceId, changedPaths, nil, req.Dry, req.Strict)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return &runtimev1.RenameFileAndReconcileResponse{
+		Errors:        res.Errors,
+		AffectedPaths: res.AffectedPaths,
+	}, nil
+}
+
+// DeleteFileAndReconcile implements RuntimeService
+func (s *Server) DeleteFileAndReconcile(ctx context.Context, req *runtimev1.DeleteFileAndReconcileRequest) (*runtimev1.DeleteFileAndReconcileResponse, error) {
+	err := s.runtime.DeleteFile(ctx, req.InstanceId, req.Path)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	changedPaths := []string{req.Path}
+	res, err := s.runtime.Reconcile(ctx, req.InstanceId, changedPaths, nil, req.Dry, req.Strict)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return &runtimev1.DeleteFileAndReconcileResponse{
+		Errors:        res.Errors,
+		AffectedPaths: res.AffectedPaths,
+	}, nil
+}
+
+// RefreshAndReconcile implements RuntimeService
+func (s *Server) RefreshAndReconcile(ctx context.Context, req *runtimev1.RefreshAndReconcileRequest) (*runtimev1.RefreshAndReconcileResponse, error) {
+	changedPaths := []string{req.Path}
+	res, err := s.runtime.Reconcile(ctx, req.InstanceId, changedPaths, changedPaths, req.Dry, req.Strict)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return &runtimev1.RefreshAndReconcileResponse{
+		Errors:        res.Errors,
+		AffectedPaths: res.AffectedPaths,
+	}, nil
+}
+
+// TriggerRefresh implements RuntimeService
+func (s *Server) TriggerRefresh(ctx context.Context, req *runtimev1.TriggerRefreshRequest) (*runtimev1.TriggerRefreshResponse, error) {
+	err := s.runtime.RefreshSource(ctx, req.InstanceId, req.Name)
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+
+	return &runtimev1.TriggerRefreshResponse{}, nil
+}
+
+// TriggerSync implements RuntimeService
+func (s *Server) TriggerSync(ctx context.Context, req *runtimev1.TriggerSyncRequest) (*runtimev1.TriggerSyncResponse, error) {
+	err := s.runtime.SyncExistingTables(ctx, req.InstanceId)
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+
+	// Done
+	// TODO: This should return stats about synced tables. However, it will be refactored into reconcile, so no need to fix this now.
+	return &runtimev1.TriggerSyncResponse{}, nil
+}
+
+func pbToObjectType(in runtimev1.ObjectType) drivers.ObjectType {
+	switch in {
+	case runtimev1.ObjectType_OBJECT_TYPE_UNSPECIFIED:
+		return drivers.ObjectTypeUnspecified
+	case runtimev1.ObjectType_OBJECT_TYPE_TABLE:
+		return drivers.ObjectTypeTable
+	case runtimev1.ObjectType_OBJECT_TYPE_SOURCE:
+		return drivers.ObjectTypeSource
+	case runtimev1.ObjectType_OBJECT_TYPE_MODEL:
+		return drivers.ObjectTypeModel
+	case runtimev1.ObjectType_OBJECT_TYPE_METRICS_VIEW:
+		return drivers.ObjectTypeMetricsView
+	}
+	panic(fmt.Errorf("unhandled object type %s", in))
+}
+
+func catalogObjectToPB(obj *drivers.CatalogEntry) (*runtimev1.CatalogEntry, error) {
+	catalog := &runtimev1.CatalogEntry{
+		Name:        obj.Name,
+		Path:        obj.Path,
+		CreatedOn:   timestamppb.New(obj.CreatedOn),
+		UpdatedOn:   timestamppb.New(obj.UpdatedOn),
+		RefreshedOn: timestamppb.New(obj.RefreshedOn),
+	}
+
+	switch obj.Type {
+	case drivers.ObjectTypeTable:
+		catalog.Object = &runtimev1.CatalogEntry_Table{
+			Table: obj.GetTable(),
+		}
+	case drivers.ObjectTypeSource:
+		catalog.Object = &runtimev1.CatalogEntry_Source{
+			Source: obj.GetSource(),
+		}
+	case drivers.ObjectTypeModel:
+		catalog.Object = &runtimev1.CatalogEntry_Model{
+			Model: obj.GetModel(),
+		}
+	case drivers.ObjectTypeMetricsView:
+		catalog.Object = &runtimev1.CatalogEntry_MetricsView{
+			MetricsView: obj.GetMetricsView(),
+		}
+	default:
+		panic("not implemented")
+	}
+
+	return catalog, nil
 }

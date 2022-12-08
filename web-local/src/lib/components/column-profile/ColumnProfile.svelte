@@ -1,90 +1,141 @@
 <script lang="ts">
-  import { DataTypeIcon } from "../data-types";
-  import ColumnEntry from "./ColumnEntry.svelte";
+  import {
+    useRuntimeServiceGetTableRows,
+    useRuntimeServiceProfileColumns,
+  } from "@rilldata/web-common/runtime-client";
+  import { onMount } from "svelte";
+  import { COLUMN_PROFILE_CONFIG } from "../../application-config";
+  import { runtimeStore } from "../../application-state-stores/application-store";
+  import { NATIVE_SELECT } from "../../util/component-classes";
+  import { defaultSort, sortByName, sortByNullity } from "./sort-utils";
 
-  import notificationStore from "./ColumnProfile.svelte";
-  import ColumnProfileDetails from "./ColumnProfileDetails.svelte";
-  import ColumnProfileTitle from "./ColumnProfileTitle.svelte";
-  import ColumnSummaryMiniPlots from "./ColumnSummaryMiniPlots.svelte";
+  import { getColumnType } from "./column-types";
+  import { getSummaries } from "./queries";
 
-  export let name;
-  export let type;
-  export let summary;
-  export let totalRows;
-  export let nullCount;
-  export let example;
-  export let entityId;
-  export let view = "summaries"; // summaries, example
-  export let containerWidth: number;
+  export let containerWidth = 0;
+  // const queryClient = useQueryClient();
+  export let objectName: string;
+  export let indentLevel = 0;
 
-  export let indentLevel = 1;
+  let mode = "summaries";
 
-  export let hideRight = false;
-  export let hideNullPercentage = false;
-  export let compactBreakpoint = 350;
+  let container;
 
-  let active = false;
+  onMount(() => {
+    const observer = new ResizeObserver(() => {
+      containerWidth = container?.clientWidth ?? 0;
+    });
+    observer.observe(container);
+    return () => observer.unobserve(container);
+  });
 
-  // FIXME: `close` does not appear to be used in live code, just routes/dev.
-  // Can we remove it? Even there it could be replaced by setting the `active` prop.
-  export function close() {
-    active = false;
+  // function invalidateForModel(queryHash, modelName) {
+  //   const r = new RegExp(
+  //     `\/v1\/instances\/[a-zA-Z0-9-]+\/queries/[a-zA-Z0-9-]+\/tables\/${modelName}`
+  //   );
+  //   return r.test(queryHash);
+  // }
+
+  // invalidate any existing queries when this key changes.
+  // $: if (key) {
+  //   queryClient?.resetQueries({
+  //     predicate: (query) => {
+  //       console.log(
+  //         query.queryHash,
+  //         invalidateForModel(query.queryHash, objectName)
+  //       );
+  //       return false;
+  //     },
+  //   });
+  // }
+
+  // get all column profiles.
+  let profileColumns;
+  $: profileColumns = useRuntimeServiceProfileColumns(
+    $runtimeStore?.instanceId,
+    objectName,
+    {},
+    { query: { keepPreviousData: true } }
+  );
+
+  /** get single example */
+  let exampleValue;
+  $: exampleValue = useRuntimeServiceGetTableRows(
+    $runtimeStore?.instanceId,
+    objectName,
+    { limit: 1 }
+  );
+
+  let nestedColumnProfileQuery;
+  $: if ($profileColumns?.data?.profileColumns) {
+    nestedColumnProfileQuery = getSummaries(
+      objectName,
+      $runtimeStore?.instanceId,
+      $profileColumns?.data?.profileColumns
+    );
+  }
+
+  $: profile = $nestedColumnProfileQuery;
+  let sortedProfile;
+  const sortByOriginalOrder = null;
+
+  let sortMethod = defaultSort;
+  $: if (profile?.length && sortMethod !== sortByOriginalOrder) {
+    sortedProfile = [...profile].sort(sortMethod);
+  } else {
+    sortedProfile = profile;
   }
 </script>
 
-<!-- pl-10 -->
-<ColumnEntry
-  left={indentLevel === 1 ? 10 : 4}
-  {hideRight}
-  {active}
-  emphasize={active}
-  on:shift-click={async () => {
-    await navigator.clipboard.writeText(name);
-    notificationStore.send({
-      message: `copied column name "${name}" to clipboard`,
-    });
-  }}
-  on:select={async () => {
-    // we should only allow activation when there are rows present.
-    if (totalRows) {
-      active = !active;
-    }
-  }}
+<!-- pl-16 -->
+<div
+  bind:this={container}
+  class="pl-{indentLevel === 1
+    ? '10'
+    : '4'} pr-5 pb-2 flex justify-between text-gray-500"
+  class:flex-col={containerWidth < 325}
 >
-  <DataTypeIcon slot="icon" {type} />
+  <select
+    style:transform="translateX(-4px)"
+    bind:value={sortMethod}
+    class={NATIVE_SELECT}
+  >
+    <option value={sortByOriginalOrder}>show original order</option>
+    <option value={defaultSort}>sort by type</option>
+    <option value={sortByNullity}>sort by null %</option>
+    <option value={sortByName}>sort by name</option>
+  </select>
+  <select
+    style:transform="translateX(4px)"
+    bind:value={mode}
+    class={NATIVE_SELECT}
+    class:hidden={containerWidth < 325}
+  >
+    <option value="summaries">show summary&nbsp;</option>
+    <option value="example">show example</option>
+    <option value="hide">hide reference</option>
+  </select>
+</div>
 
-  <ColumnProfileTitle slot="left" {...{ name, type, totalRows, active }} />
-
-  <ColumnSummaryMiniPlots
-    slot="right"
-    {...{
-      type,
-      summary,
-      totalRows,
-      nullCount,
-      example,
-      view,
-      containerWidth,
-      hideNullPercentage,
-      compactBreakpoint,
-    }}
-  />
-
-  <svelte:fragment slot="context-button">
-    <slot name="context-button" />
-  </svelte:fragment>
-
-  <ColumnProfileDetails
-    slot="details"
-    {...{
-      active,
-      type,
-      summary,
-      totalRows,
-      containerWidth,
-      indentLevel,
-      name,
-      entityId,
-    }}
-  />
-</ColumnEntry>
+<div>
+  {#if sortedProfile && exampleValue}
+    {#each sortedProfile as column (column.name)}
+      {@const hideRight = containerWidth < COLUMN_PROFILE_CONFIG.hideRight}
+      {@const hideNullPercentage =
+        containerWidth < COLUMN_PROFILE_CONFIG.hideNullPercentage}
+      {@const compact =
+        containerWidth < COLUMN_PROFILE_CONFIG.compactBreakpoint}
+      <svelte:component
+        this={getColumnType(column.type)}
+        type={column.type}
+        {objectName}
+        columnName={column.name}
+        example={$exampleValue?.data?.data?.[0]?.[column.name]}
+        {mode}
+        {hideRight}
+        {hideNullPercentage}
+        {compact}
+      />
+    {/each}
+  {/if}
+</div>

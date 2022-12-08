@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { TOOLTIP_STRING_LIMIT } from "@rilldata/web-local/lib/application-config";
   import { createEventDispatcher, getContext } from "svelte";
   import {
     INTERVALS,
@@ -8,7 +9,7 @@
   import { formatDataType } from "../../../util/formatters";
   import { createShiftClickAction } from "../../../util/shift-click-action";
   import { FormattedDataType } from "../../data-types";
-  import notificationStore from "../../notifications";
+  import { notifications } from "../../notifications";
   import Shortcut from "../../tooltip/Shortcut.svelte";
   import StackingWord from "../../tooltip/StackingWord.svelte";
   import Tooltip from "../../tooltip/Tooltip.svelte";
@@ -73,18 +74,27 @@
   // we need to set *all* items to be included, because by default if a user has not
   // selected any values, we assume they want all values included in all calculations.
   $: excluded = atLeastOneSelected
-    ? (excludeMode && rowSelected) || (!excludeMode && !rowSelected)
+    ? excludeMode
+      ? rowSelected
+      : !rowSelected
     : false;
 
   $: barColor = excluded
-    ? "bg-gray-200 dark:bg-gray-700"
-    : "bg-blue-200 dark:bg-blue-700";
+    ? "ui-measure-bar-excluded"
+    : rowSelected
+    ? "ui-measure-bar-included-selected"
+    : "ui-measure-bar-included";
 
-  let TOOLTIP_STRING_LIMIT = 200;
   $: tooltipValue =
     value && STRING_LIKES.has(type) && value.length >= TOOLTIP_STRING_LIMIT
       ? value?.slice(0, TOOLTIP_STRING_LIMIT) + "..."
       : value;
+
+  $: formattedDataTypeStyle = excluded
+    ? "font-normal ui-copy-disabled-faint"
+    : rowSelected
+    ? "font-normal ui-copy-strong"
+    : "font-normal ui-copy";
 </script>
 
 <Tooltip location="top" distance={16} suppress={suppressTooltip}>
@@ -129,16 +139,14 @@
             exportedValue = `TIMESTAMP '${value}'`;
           }
           await navigator.clipboard.writeText(exportedValue);
-          notificationStore.send({ message: `copied value to clipboard` });
+          notifications.send({ message: `copied value to clipboard` });
           // update this to set the active animation in the tooltip text
         }}
       >
         <FormattedDataType
           value={formattedValue || value}
           {type}
-          customStyle={excluded
-            ? "font-normal ui-copy-disabled-faint"
-            : "font-medium ui-copy"}
+          customStyle={formattedDataTypeStyle}
           inTable
         />
       </button>

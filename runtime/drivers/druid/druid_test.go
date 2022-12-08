@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
+	"github.com/rilldata/rill/runtime/drivers"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	"github.com/rilldata/rill/runtime/drivers"
 )
 
 const testTable = "test_data"
@@ -163,16 +163,21 @@ func testSchemaAll(t *testing.T, olap drivers.OLAPStore) {
 	require.Equal(t, 1, len(tables))
 	require.Equal(t, testTable, tables[0].Name)
 
-	require.Equal(t, "__time", tables[0].Columns[0].Name)
-	require.Equal(t, "TIMESTAMP", tables[0].Columns[0].Type)
-	require.Equal(t, "bid_price", tables[0].Columns[1].Name)
-	require.Equal(t, "DOUBLE", tables[0].Columns[1].Type)
-	require.Equal(t, "domain", tables[0].Columns[2].Name)
-	require.Equal(t, "VARCHAR", tables[0].Columns[2].Type)
-	require.Equal(t, "id", tables[0].Columns[3].Name)
-	require.Equal(t, "BIGINT", tables[0].Columns[3].Type)
-	require.Equal(t, "publisher", tables[0].Columns[4].Name)
-	require.Equal(t, "VARCHAR", tables[0].Columns[4].Type)
+	require.Equal(t, "__time", tables[0].Schema.Fields[0].Name)
+	require.Equal(t, runtimev1.Type_CODE_TIMESTAMP, tables[0].Schema.Fields[0].Type.Code)
+	require.Equal(t, false, tables[0].Schema.Fields[0].Type.Nullable)
+	require.Equal(t, "bid_price", tables[0].Schema.Fields[1].Name)
+	require.Equal(t, runtimev1.Type_CODE_FLOAT64, tables[0].Schema.Fields[1].Type.Code)
+	require.Equal(t, false, tables[0].Schema.Fields[1].Type.Nullable)
+	require.Equal(t, "domain", tables[0].Schema.Fields[2].Name)
+	require.Equal(t, runtimev1.Type_CODE_STRING, tables[0].Schema.Fields[2].Type.Code)
+	require.Equal(t, true, tables[0].Schema.Fields[2].Type.Nullable)
+	require.Equal(t, "id", tables[0].Schema.Fields[3].Name)
+	require.Equal(t, runtimev1.Type_CODE_INT64, tables[0].Schema.Fields[3].Type.Code)
+	require.Equal(t, false, tables[0].Schema.Fields[3].Type.Nullable)
+	require.Equal(t, "publisher", tables[0].Schema.Fields[4].Name)
+	require.Equal(t, runtimev1.Type_CODE_STRING, tables[0].Schema.Fields[4].Type.Code)
+	require.Equal(t, true, tables[0].Schema.Fields[4].Type.Nullable)
 }
 
 func testSchemaLookup(t *testing.T, olap drivers.OLAPStore) {

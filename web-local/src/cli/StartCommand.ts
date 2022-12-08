@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { DataModelerCliCommand } from "./DataModelerCliCommand";
 import { DimensionsActions } from "@rilldata/web-local/common/rill-developer-service/DimensionsActions";
 import { MeasuresActions } from "@rilldata/web-local/common/rill-developer-service/MeasuresActions";
@@ -24,7 +25,7 @@ export class StartCommand extends DataModelerCliCommand {
   }
 
   protected async sendActions(): Promise<void> {
-    return new ExpressServer(
+    await new ExpressServer(
       this.config,
       this.dataModelerService,
       new RillDeveloperService(
@@ -46,9 +47,11 @@ export class StartCommand extends DataModelerCliCommand {
         )
       ),
       this.dataModelerStateService,
-      this.notificationService,
-      this.metricsService
+      this.notificationService
     ).init();
+    execSync(`open ${this.config.server.serverUrl} | true`, {
+      stdio: "ignore",
+    });
   }
 
   protected async teardown(): Promise<void> {

@@ -16,10 +16,6 @@ cache:
     - "$TRAVIS_BUILD_DIR/data"
     - "node_modules"
 
-env:
-  global:
-    - DOCKER_IMAGE=rilldata/rill-developer
-
 addons:
   apt:
     packages:
@@ -31,107 +27,16 @@ jobs:
     # Run tests always
     - stage: Test
       name: "Verify build"
-      if: tag IS NOT present
+      if: false # disabling this
 
       # in order to achieve npm ci (clean install) delete the travis cache.
       install: &npm-install
         - echo "NPM Install can take up to 15 mins"
         - npm i
         - echo "Disabling telmetry"
-        - cat <<< "$(jq -c -M '.sendTelemetryData |= false' ~/.rill/local.json)" > ~/.rill/local.json
+        - cat <<< "$(jq -c -M '.analyticsEnabled |= false' ~/.rill/local.json)" > ~/.rill/local.json
 
-      script:
-        - set -e
-        - echo "Running npm install"
-        - npm install
-
-        - echo "Check that prettier has been applied"
-        - npx prettier --check "**/*"
-
-        - echo "Install browser for UI tests"
-        - npx playwright install
-
-        - echo "Build the entire application"
-        - npm run build
-
-        - echo "Verify lint of the repo"
-        - npm run lint -w web-local -- --quiet
-
-        - echo "Run all tests"
-        - npm run test
-
-    - stage: Test
-      name: "Verify docker build"
-      if: tag IS NOT present
-
-      install: docker --version
-      script:
-        - echo "Building docker image"
-        - docker build -t ${DOCKER_IMAGE} .
-
-    # Run SQL lib tests
-    - stage: Test
-      language: java
-      jdk: openjdk17
-      name: "Run SQL lib tests"
-      if: tag IS NOT present
-      install:
-        - PROTOC_ZIP=protoc-21.5-linux-x86_64.zip
-        - curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.5/$PROTOC_ZIP
-        - sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
-        - sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
-        - rm -f $PROTOC_ZIP
-      script:
-        - echo "Testing SQL library"
-        - mvn -f sql/ clean test
-
-    # Publish docker image on the merge to main branch
-    - stage: Release
-      name: "Build & Publish docker"
-      if: tag IS present
-
-      install: docker --version
-
-      script:
-        - SHORT_SHA=$(git rev-parse --short HEAD)
-        - echo ${DOCKERHUB_CRED} | docker login --username ${DOCKERHUB_USER} --password-stdin
-        - docker-compose pull
-
-        - echo "Publish docker image with tag ${TRAVIS_TAG}"
-        - TAG=${TRAVIS_TAG} docker-compose build
-        - TAG=${TRAVIS_TAG} docker-compose push
-
-        - echo "Publish docker image with tag latest"
-        - docker-compose build
-        - docker-compose push
-
-    # Publish binaries and npm on the release
-    - stage: Release
-      name: "Build & Publish npm module"
-      if: tag IS present
-
-      install: *npm-install
-
-      script:
-        - echo "Install browser for UI tests"
-        - npx playwright install
-
-        - echo "Build the entire application"
-        - npm run build
-
-      # The main npm package is within a folder
-      before_deploy:
-        - cd web-local
-
-      # Deploy will run npm test
-      deploy:
-        provider: npm
-        email: ops@rilldata.com
-        api_token: ${NPMJS_TOKEN}
-        cleanup: false
-        on:
-          tags: true
-
+    # Publish binaries on the release
     - stage: Release
       name: "Build & Publish Mac os binary"
       if: tag IS present OR type IN (cron)
@@ -171,7 +76,7 @@ jobs:
           - rilldata/rill-macos-x64
           - rilldata/rill-linux-x64
           - rilldata/rill-win-x64.exe
-        cleanup: false
+        skip_cleanup: true
         on:
           tags: true
 
@@ -190,22 +95,6 @@ jobs:
       install: *npm-install
       script: *build-vercel-pkg
       deploy: *deploy-vercel-pkg
-
-#     - stage: Release
-#       name: "Build & Publish Windows binary"
-#       if: tag IS present OR type IN (cron)
-#       os: windows
-#       env:
-#         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
-
-#       before_install:
-#         - echo "Installing python 3 and gcloud"
-#         - choco install python3 gcloudsdk
-#         - ./scripts/check_nightly.sh
-
-#       install: *npm-install
-#       script: *build-vercel-pkg
-#       deploy: *deploy-vercel-pkg
 
     - stage: Tag
       name: "Cut a new Release"

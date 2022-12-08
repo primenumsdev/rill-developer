@@ -20,15 +20,10 @@
   import SearchBar from "../search/Search.svelte";
   import Spinner from "../Spinner.svelte";
 
-  export let metricsDefId: string;
-  export let dimensionId: string;
+  export let metricViewName: string;
+  export let dimensionName: string;
   export let isFetching: boolean;
   export let excludeMode = false;
-
-  let excludeToggle = excludeMode;
-  $: if (excludeToggle != excludeMode) {
-    toggleFilterMode();
-  }
 
   $: filterKey = excludeMode ? "exclude" : "include";
   $: otherFilterKey = excludeMode ? "include" : "exclude";
@@ -49,10 +44,10 @@
   }
 
   const goBackToLeaderboard = () => {
-    metricsExplorerStore.setMetricDimensionId(metricsDefId, null);
+    metricsExplorerStore.setMetricDimensionName(metricViewName, null);
   };
   function toggleFilterMode() {
-    metricsExplorerStore.toggleFilterMode(metricsDefId, dimensionId);
+    metricsExplorerStore.toggleFilterMode(metricViewName, dimensionName);
   }
 </script>
 
@@ -83,12 +78,10 @@
     style:cursor="pointer"
   >
     <Tooltip location="left" distance={16}>
-      <div
-        class="flex items-center mr-3 ui-copy-icon"
-        style:grid-column-gap=".4rem"
-      >
-        <Switch bind:checked={excludeToggle} />
-        {excludeMode ? "Exclude" : "Include"}
+      <div class="mr-3 ui-copy-icon" style:grid-column-gap=".4rem">
+        <Switch on:click={() => toggleFilterMode()} checked={excludeMode}>
+          Exclude
+        </Switch>
       </div>
       <TooltipContent slot="tooltip-content">
         <TooltipTitle>

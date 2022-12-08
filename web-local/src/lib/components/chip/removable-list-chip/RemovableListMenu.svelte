@@ -15,11 +15,6 @@
   export let searchedValues: string[] = [];
   export let excludeMode = false;
 
-  let excludeToggle = excludeMode;
-  $: if (excludeToggle != excludeMode) {
-    onToggleHandler();
-  }
-
   let searchText = "";
 
   const dispatch = createEventDispatcher();
@@ -85,18 +80,23 @@
         >
           <svelte:fragment slot="icon">
             {#if selectedValues.includes(value) && !excludeMode}
-              <Check />
+              <Check size="20px" />
             {:else if selectedValues.includes(value) && excludeMode}
-              <Cancel />
+              <Cancel size="20px" />
             {:else}
-              <Spacer />
+              <Spacer size="20px" />
             {/if}
           </svelte:fragment>
-          {#if value?.length > 240}
-            {value.slice(0, 240)}...
-          {:else}
-            {value}
-          {/if}
+          <span
+            class:ui-copy-disabled={selectedValues.includes(value) &&
+              excludeMode}
+          >
+            {#if value?.length > 240}
+              {value.slice(0, 240)}...
+            {:else}
+              {value}
+            {/if}
+          </span>
         </MenuItem>
       {/each}
     {:else}
@@ -104,9 +104,10 @@
     {/if}
   </div>
   <Footer>
-    <span class="flex gap-x-2 items-center ui-copy">
-      <Switch bind:checked={excludeToggle} />
-      {excludeMode ? "Exclude" : "Include"}
+    <span class="ui-copy">
+      <Switch on:click={() => onToggleHandler()} checked={excludeMode}>
+        Exclude
+      </Switch>
     </span>
     {#if numSelectedNotInSearch}
       <div class="ui-label italic">

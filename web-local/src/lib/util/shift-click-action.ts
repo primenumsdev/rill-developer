@@ -1,8 +1,15 @@
+import { notifications } from "@rilldata/web-local/lib/components/notifications";
 import { setContext } from "svelte";
-import { writable, get } from "svelte/store";
-
+import { get, writable } from "svelte/store";
 interface CreateShiftClick {
   stopImmediatePropagation: boolean;
+}
+
+export async function copyToClipboard(value, message = "copied to clipboard") {
+  await navigator.clipboard.writeText(value);
+  notifications.send({
+    message,
+  });
 }
 
 export function createShiftClickAction(
@@ -56,6 +63,7 @@ export function createShiftClickAction(
           if (_stopImmediatePropagation) {
             event.stopImmediatePropagation();
           }
+          event.preventDefault();
         }
         node.addEventListener("mousedown", mouseDown);
       }

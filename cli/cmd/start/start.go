@@ -3,31 +3,61 @@ package start
 import (
 	"fmt"
 
+	"github.com/rilldata/rill/cli/pkg/local"
 	"github.com/spf13/cobra"
 )
 
 // StartCmd represents the start command
-func StartCmd() *cobra.Command {
+func StartCmd(ver string) *cobra.Command {
+	var olapDriver string
+	var olapDSN string
+	var projectPath string
+	var httpPort int
+	var grpcPort int
+	var verbose bool
+	var noUI bool
+	var noOpen bool
+
 	var startCmd = &cobra.Command{
 		Use:   "start",
-		Short: "A brief description of rill start",
-		Long:  `A longer description.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("start called")
+		Short: "Build project and start web app",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			app, err := local.NewApp(ver, verbose, olapDriver, olapDSN, projectPath)
+			if err != nil {
+				return err
+			}
+
+			// If not initialized, init repo with an empty project
+			if !app.IsProjectInit() {
+				err := app.InitProject("")
+				if err != nil {
+					return fmt.Errorf("init project: %w", err)
+				}
+			}
+
+			err = app.Reconcile()
+			if err != nil {
+				return fmt.Errorf("reconcile project: %w", err)
+			}
+
+			err = app.Serve(httpPort, grpcPort, !noUI, !noOpen)
+			if err != nil {
+				return fmt.Errorf("serve: %w", err)
+			}
+
+			return nil
 		},
 	}
 
+	startCmd.Flags().SortFlags = false
+	startCmd.Flags().StringVar(&projectPath, "project", ".", "Project directory")
+	startCmd.Flags().BoolVar(&noOpen, "no-open", false, "Do not open browser")
+	startCmd.Flags().StringVar(&olapDSN, "db", local.DefaultOLAPDSN, "Database DSN")
+	startCmd.Flags().StringVar(&olapDriver, "db-driver", local.DefaultOLAPDriver, "Database driver")
+	startCmd.Flags().IntVar(&httpPort, "port", 9009, "Port for HTTP")
+	startCmd.Flags().IntVar(&grpcPort, "port-grpc", 9010, "Port for gRPC")
+	startCmd.Flags().BoolVar(&noUI, "no-ui", false, "Serve only the backend")
+	startCmd.Flags().BoolVar(&verbose, "verbose", false, "Sets the log level to debug")
+
 	return startCmd
-}
-
-func init() {
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// startCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// startCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
